@@ -1,24 +1,31 @@
+(*An useless fonction*)
 let useless () = ()
 
+(*Terminate application*)
 let destroy () =
   GMain.Main.quit ()
 
-let window = GWindow.window
-  ~title:"Olympe pre-beta GUI" ()
+(*Create the main window*)
+let create_main_window () =
+  let window = GWindow.window
+    ~title:"Olympe pre-beta GUI" () in
+    window#connect#destroy ~callback:destroy;
+    window
 
-let main_vbox = GPack.vbox
-  ~packing:window#add ()
-
+(* --- MENU BAR --- *)
+(*Add a simple text item to a menu*)
 let create_simple_item menu label callback =
   let item = GMenu.menu_item
       ~label:label
       ~packing:menu#append () in
     item#connect#activate ~callback:callback
 
+(*Add a separator item to a menu*)
 let create_separator_item menu =
   GMenu.separator_item
     ~packing:menu#append ()
 
+(*Add an item with multiple choices to a menu*)
 let create_submenu_item menu label values =
   let submenu_item = GMenu.menu_item
     ~label:label
@@ -30,10 +37,11 @@ let create_submenu_item menu label values =
   in
     List.iter create_subitem values
 
-let create_main_menubar () =
+(*Create the main menu bar (a the top of the window*)
+let create_main_menubar ~packing =
   let menu_bar = GMenu.menu_bar
     ~height:20
-    ~packing:main_vbox#add () in
+    ~packing () in
 
   (*Déclaration du menu File*)
   let menu_file_title = GMenu.menu_item 
@@ -83,12 +91,28 @@ let create_main_menubar () =
     create_simple_item    menu_about "About..." useless;
 
     create_simple_item    menu_help  "Get help..." useless
-    
 
+(* --- STATUS BAR --- *)
+let create_status_bar ~packing =
+  let statbar = GMisc.statusbar
+    ~has_resize_grip:true
+    ~packing () in
+    statbar#new_context ~name:"Information display"
+
+(* --- GUI INIT --- *)
+let gui_init () =
+  let window = create_main_window () in
+  let main_vbox = GPack.vbox ~packing:window#add () in
+  let main_menu_bar = create_main_menubar ~packing:main_vbox#add in
+  let status_bar = create_status_bar ~packing:main_vbox#add in
+  status_bar#push "testouille";
+
+  window#show ()
+  
+    
+(* --- MAIN LOOP --- *)
 let main () =
-  window#connect#destroy ~callback:destroy;
-  create_main_menubar ();
-  window#show ();
+  gui_init ();
   GMain.Main.main ()
 
 let _ = main ()
