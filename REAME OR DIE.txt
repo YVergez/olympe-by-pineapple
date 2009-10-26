@@ -1,1 +1,0 @@
-Congrats, you have successfully configured your source checkout program !
