@@ -1,9 +1,11 @@
-COMPIL_BYTE=ocamlc -w s
-COMPIL_NATI=ocamlopt -w s
+OCAMLMAKEFILE = OCamlMakefile
 
+SOURCES = gui.mli gui.ml main.ml
+RESULT  = olympe
+INCDIRS = +lablgtk2 +lablgl
 
-byte:
-	$(COMPIL_BYTE) -o olympe -I +lablgtk2 lablgtk.cma gtkInit.cmo gui.ml
+OCAMLBLDFLAGS = lablgtk.cma  gtkInit.cmo lablgl.cma  lablgtkgl.cma
+OCAMLNLDFLAGS = lablgtk.cmxa gtkInit.cmx lablgl.cmxa lablgtkgl.cmxa
+OCAMLFLAGS = -w s
 
-opt:
-	$(COMPIL_NATI) -o olympe -I +lablgtk2 lablgtk.cmxa gtkInit.cmx gui.ml
+include $(OCAMLMAKEFILE)
