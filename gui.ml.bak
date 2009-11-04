@@ -1,0 +1,412 @@
+(* --- MISC -- *)
+(* Define global references *)
+  let img_src  = ref "" 
+  and pre_img_src  = ref "resources/tmp/pre_img.bmp"
+  and inter    = ref 10
+  and obj_file_src = ref "resources/tmp/final_obj.obj"
+
+(*An useless fonction*)
+let void () = ()
+	  
+(*Terminate application*)
+let destroy () =
+  GMain.Main.quit ()
+
+(*Ask the user if he really want to terminate the application*)
+let ask_destroy ev =
+  let ask_dialog = GWindow.message_dialog
+    ~modal:true
+    ~message:"Do you really want to exit the application ?"
+    ~use_markup:true
+    ~message_type:`INFO
+    ~buttons:GWindow.Buttons.yes_no
+    ~destroy_with_parent:true
+    ~title:"Quit ?"
+    ~deletable:false
+    ~focus_on_map:true
+    ~position:`CENTER_ON_PARENT
+    ~resizable:false
+    ~show:true () in
+    match ask_dialog#run () with
+      | `YES -> 
+	  destroy (); (*bricolage pour gérer la fermeture à partir du menu*)
+	  false
+      | _    ->
+	  ask_dialog#destroy ();
+	  true
+
+(*Create the main window*)
+let create_main_window () =
+  let window = GWindow.window
+    ~position:`CENTER
+    ~width:800
+    ~height:600
+    ~resizable:true
+    ~allow_grow:true
+    ~allow_shrink:true
+    ~title:"Olympe pre-beta GUI" () in
+    window#event#connect#delete ~callback:ask_destroy;
+    window#event#connect#destroy ~callback:ask_destroy;
+    window#connect#destroy ~callback:destroy;
+    window
+
+(* --- MENU BAR --- *)
+(*Add a simple text item to a menu*)
+let create_text_item menu label callback () =
+  let item = GMenu.menu_item
+    ~label:label
+    ~packing:menu#append () in
+    item#connect#activate ~callback;
+    item
+
+(*Add a simple image & text item to a menu*)
+let create_image_item menu label callback ~file () =
+  let menu_icon = GMisc.image
+    ~file:("resources/menu/" ^ file) () in
+  let item = GMenu.image_menu_item
+    ~label:label
+    ~image:menu_icon
+    ~packing:menu#append () in 
+    item#connect#activate ~callback;
+    item
+
+(*Add a simple image & text item from stock to a menu*)
+let create_stock_item menu ~stock callback () =
+  let item = GMenu.image_menu_item
+    ~stock
+    ~packing:menu#append () in 
+    item#connect#activate ~callback;
+    item
+
+(*Add a separator item to a menu*)
+let create_separator_item menu () =
+  GMenu.separator_item
+    ~packing:menu#append ()
+
+(*Add an item with multiple choices to a menu*)
+let create_submenu_item menu label values () =
+  let submenu_item = GMenu.menu_item
+    ~label:label
+    ~packing:menu#append () in
+  let submenu = GMenu.menu
+    ~packing:submenu_item#set_submenu () in
+  let create_subitem (label, callback) =
+    create_text_item submenu label callback ();();
+  in
+    List.iter create_subitem values
+
+(*Add an image item with multiple choices to a menu*)
+let create_submenu_image_item menu label values ~file () =
+  let icon = GMisc.image
+    ~file:("resources/menu/" ^ file) () in
+  let submenu_item = GMenu.image_menu_item
+    ~label:label
+    ~image:icon
+    ~packing:menu#append () in
+  let submenu = GMenu.menu
+    ~packing:submenu_item#set_submenu () in
+  let create_subitem (label, callback) =
+    create_text_item submenu label callback ();();
+  in
+    List.iter create_subitem values
+
+(*Create the main menu bar (a the top of the window*)
+let create_main_menubar ~packing ~window =
+  let menu_bar = GMenu.menu_bar
+    ~packing () in
+
+  (*Déclaration du menu File*)
+  let menu_file_title = GMenu.menu_item 
+    ~label:"File"
+    ~packing:menu_bar#append () in
+  let menu_file = GMenu.menu
+    ~packing:menu_file_title#set_submenu () in
+
+  (*Déclaration du menu View*)
+  let menu_view_title = GMenu.menu_item 
+    ~label:"View"
+    ~show:false
+    ~packing:menu_bar#append () in
+  let menu_view = GMenu.menu
+    ~packing:menu_view_title#set_submenu () in
+  
+  (*Déclaration du menu Help*)
+  let menu_help_title = GMenu.menu_item 
+    ~label:"?"
+    ~packing:menu_bar#append () in
+  let menu_help = GMenu.menu
+    ~packing:menu_help_title#set_submenu () in
+
+    create_image_item    menu_file  "New project..."  void ~file:"new.png" ();
+    create_stock_item    menu_file  ~stock:`NEW  void ();
+    create_image_item    menu_file  "Open project..." void ~file:"open.png" ();
+    create_image_item    menu_file  "Save project..." void ~file:"save.png" ();
+    create_separator_item menu_file ();
+    let exit_item = create_image_item    menu_file  "Quit" void
+      ~file:"exit.png" () in
+    (*really quit ?*)
+      exit_item#event#connect#button_release ~callback:ask_destroy;
+
+    create_submenu_image_item   menu_view  "View mode"   
+      [("Free",void);
+       ("First person",void)] ~file:"eye.png" ();
+    create_submenu_image_item   menu_view  "Display mode"  
+      [("Wireframe",void);
+       ("Plain",void)] ~file:"display.png" ();
+    create_submenu_image_item   menu_view  "Camera"        
+      [("Rotate...",void);
+       ("Scale...",void);
+       ("Zoom...",void);
+       ("Position...",void)] ~file:"cam.png" ();
+    create_submenu_image_item   menu_view  "Light"    
+      [("Color...",void);
+       ("Rotate...",void);
+       ("Position",void)] ~file:"light.png" ();
+
+    create_image_item    menu_help "About..." void ~file:"about.png" ();
+    create_image_item    menu_help "Get help..." void ~file:"help.png" ();
+    [|menu_file_title;menu_view_title;menu_help_title|]
+
+(* --- STATUS BAR --- *)
+let create_status_bar ~packing =
+  let statbar = GMisc.statusbar
+    ~has_resize_grip:true
+    ~packing () in
+    statbar#new_context ~name:"Information display"
+
+(* ---  LablGL --- *)
+let create_gl_area ~packing ?show () =
+  let area = GlGtk.area
+    [`RGBA;`DEPTH_SIZE 1;`DOUBLEBUFFER]
+    ~width:500
+    ~height:500 
+    ?show
+    ~packing () in
+    area
+
+(* --- SIDEBAR --- *)
+let create_sidebar ~packing () =
+  let appercu_area = GBin.frame
+    ~width:200
+    ~height:200
+    ~border_width:5
+    ~packing () in
+  let appercu = GMisc.image
+    ~file:"resources/sidebar/appercu.bmp"
+    ~packing:appercu_area#add () in
+    appercu#clear ()
+
+(* --- TOOLBAR --- *)
+let create_toolbar_pretreatment ~packing () =
+  let toolbar = GButton.toolbar
+    ~orientation:`HORIZONTAL
+    ~style:`BOTH
+    ~height:80
+    ~packing () in
+    toolbar#insert_button
+      ~text:"Open image"
+      ~icon:(GMisc.image
+	       ~file:"resources/toolbar/insert-image.svg" ())#coerce
+      ~tooltip:"Open an image file"
+      ~callback:void ();
+    toolbar#insert_space ();
+    toolbar#insert_button
+      ~text:"Help"
+      ~icon:(GMisc.image
+	       ~file:"resources/toolbar/help.svg" ())#coerce
+      ~tooltip:"Get help"
+      ~callback:void ();
+    toolbar
+
+let create_toolbar_sampling ~packing () =
+  let toolbar = GButton.toolbar
+    ~orientation:`HORIZONTAL
+    ~style:`BOTH
+    ~height:80
+    ~show:false
+    ~packing () in
+    toolbar#insert_button
+      ~text:"Save image"
+      ~icon:(GMisc.image
+	       ~file:"resources/toolbar/document-save.svg" ())#coerce
+      ~tooltip:"Save the treated file"
+      ~callback:void ();
+    toolbar#insert_space ();
+    toolbar#insert_button
+      ~text:"Help"
+      ~icon:(GMisc.image
+	       ~file:"resources/toolbar/help.svg" ())#coerce
+      ~tooltip:"Get help"
+      ~callback:void ();
+    toolbar
+
+let create_toolbar_3d ~packing () =
+  let toolbar = GButton.toolbar
+    ~orientation:`HORIZONTAL
+    ~style:`BOTH
+    ~height:80
+    ~show:false
+    ~packing () in
+    toolbar#insert_button
+      ~text:"Save 3D file"
+      ~icon:(GMisc.image
+	       ~file:"resources/toolbar/document-save.svg" ())#coerce
+      ~tooltip:"Save the .obj file"
+      ~callback:void ();
+    toolbar#insert_button
+      ~text:"Free view"
+      ~icon:(GMisc.image
+	       ~file:"resources/toolbar/view-fullscreen.svg" ())#coerce
+      ~tooltip:"Set view free"
+      ~callback:void ();
+    toolbar#insert_button
+      ~text:"First person view"
+      ~icon:(GMisc.image
+	       ~file:"resources/toolbar/eyes.png" ())#coerce
+      ~tooltip:"Set view as first person"
+      ~callback:void ();
+    toolbar#insert_space ();
+    toolbar#insert_button
+      ~text:"Help"
+      ~icon:(GMisc.image
+	       ~file:"resources/toolbar/help.svg" ())#coerce
+      ~tooltip:"Get help"
+      ~callback:void ();
+    toolbar
+
+(* --- CHANGING GUI APPEARANCE --- *)
+let change_gui_status state ~menubar ~toolbars ~img ~pre_img ~gl_area () = 
+  let hide toolbar =
+    toolbar#misc#hide () in
+  match state with
+      0 ->
+	begin
+	  (menubar.(1))#misc#hide ();
+	  Array.iter hide toolbars;
+	  (toolbars.(0))#misc#show ();
+	  img#misc#show ();
+	  pre_img#misc#hide ();
+	  gl_area#misc#hide ();
+	end
+    | 1 ->
+	begin
+	  (menubar.(1))#misc#hide ();
+	  Array.iter hide toolbars;
+	  (toolbars.(1))#misc#show ();
+	  img#misc#hide ();
+	  pre_img#misc#show ();
+	  gl_area#misc#hide ();
+	end
+    | 2 ->
+	begin
+	  (menubar.(1))#misc#show ();
+	  Array.iter hide toolbars;
+	  (toolbars.(2))#misc#show ();
+	  img#misc#hide ();
+	  pre_img#misc#hide ();
+	  gl_area#misc#show ();
+	end	
+    | _ -> ()
+
+
+(* --- STATE BUTTONS --- *)
+let create_state_buttons ~packing () =
+  let button1 = GButton.button
+    ~label:"1. Pre-treatment"
+    ~relief:`NONE
+    ~packing () 
+  and button2 = GButton.button
+    ~label:"2. Sampling"
+    ~relief:`NONE
+    ~packing ()
+  and button3 = GButton.button
+    ~label:"3. 3D view"
+    ~relief:`NONE
+    ~packing () in
+
+    [|button1;button2;button3|]
+
+
+(* --- GUI INIT --- *)
+let init () =
+
+  (* widgets witch do not change along the program execution *)
+  let window = create_main_window () in
+
+  let main_vbox = GPack.vbox
+    ~homogeneous:false
+    ~packing:window#add () in
+
+  (* theses widgets may change according to status of the program *) 
+  let main_menu_bar = create_main_menubar
+    ~packing:(main_vbox#pack ~expand:false) ~window:window in
+
+  let toolbars = [|
+    (create_toolbar_pretreatment ~packing:(main_vbox#pack ~expand:false) ());
+    (create_toolbar_sampling ~packing:(main_vbox#pack ~expand:false) ());
+    (create_toolbar_3d ~packing:(main_vbox#pack ~expand:false) ())|]
+  in
+
+  let program_state_hbox = GPack.hbox
+    ~homogeneous:true
+    ~height:34
+    ~border_width:2
+    ~packing:(main_vbox#pack ~expand:false) () in
+    
+  let state_buttons = create_state_buttons
+    ~packing:program_state_hbox#add () in
+
+  let main_view_hbox = GPack.hbox
+    ~packing:main_vbox#add () in
+
+  let sidebar_vbox = GPack.vbox
+    ~width:220
+    ~border_width:10
+    ~packing:(main_view_hbox#pack ~expand:false) () in
+    create_sidebar ~packing:(sidebar_vbox#pack ~expand:false) ();
+
+  let status_bar = create_status_bar
+    ~packing:(main_vbox#pack ~expand:false) in
+    
+  (* Declaration of 3 components of main view *)
+  let img = GMisc.image
+    ~file:!img_src
+    ~packing:main_view_hbox#add
+    ~show:false ()
+  and pre_img = GMisc.image
+    ~file:!pre_img_src
+    ~packing:main_view_hbox#add
+    ~show:false ()
+  and gl_area = create_gl_area
+    ~packing:main_view_hbox#add
+    ~show:false () in
+
+  (* Activating first state boutton *)
+  (state_buttons.(0))#connect#pressed
+    ~callback:(change_gui_status 0
+		 ~menubar:main_menu_bar
+		 ~toolbars:toolbars
+		 ~img:img
+		 ~pre_img:pre_img
+		 ~gl_area:gl_area);
+
+  (state_buttons.(1))#connect#pressed
+    ~callback:(change_gui_status 1
+		 ~menubar:main_menu_bar
+		 ~toolbars:toolbars
+		 ~img:img
+		 ~pre_img:pre_img
+		 ~gl_area:gl_area);
+
+  (state_buttons.(2))#connect#pressed
+    ~callback:(change_gui_status 2
+		 ~menubar:main_menu_bar
+		 ~toolbars:toolbars
+		 ~img:img
+		 ~pre_img:pre_img
+		 ~gl_area:gl_area);
+    
+    img#set_file "resources/gnome-foot.gif";
+    img#misc#show ();
+
+    window#show ();
