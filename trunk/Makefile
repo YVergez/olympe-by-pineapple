@@ -1,6 +1,6 @@
 OCAMLMAKEFILE = OCamlMakefile
 
-SOURCES = gui.mli gui.ml main.ml
+SOURCES = gui.mli gui.ml main.mli main.ml
 RESULT  = olympe
 INCDIRS = +lablgtk2 +lablgl
 
