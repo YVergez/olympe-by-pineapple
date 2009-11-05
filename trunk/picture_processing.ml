@@ -1,8 +1,14 @@
 (*
-___________________________
-Picture Processing for
-                 Pineapple
-___________________________
+*******************************************************
+* Nom .......... : picture_processing.ml
+* Role ......... : Trace les limites separant chaque
+*                  zone de couleur et renvoi un fichier
+*                  contenant les differentes altitudes
+* Auteur ....... : Vergez Yohann
+* Version ...... : 1.0
+* License ...... : GPL v3
+
+*******************************************************
 *)
 
 (*Cree la matrice de convolution 3/3 correspondante
@@ -35,7 +41,7 @@ let sobel src i j h w =
   let res = (abs(sobelx) + abs(sobely)) / 8 in
     res
 
-(*Supprime l'extension du fichier*)
+(*Supprime l'extension du fichier et son emplacement*)
 
 let without_ext s =
   let i = String.rindex s '.' in
@@ -54,10 +60,11 @@ let rec_color list filename =
   let out_channel = open_out filename in
   let rec add = function
     |[] -> ();
-    |(r,g,b)::t ->
+    |(r,g,b,h)::t ->
        output_string out_channel ((string_of_int r) ^ " " ^
 				    (string_of_int g) ^ " " ^
-				    (string_of_int b) ^ "\n");
+				    (string_of_int b) ^ " " ^
+				    (string_of_int h) ^ "\n");
 	add t;
   in add list;
     close_out out_channel
