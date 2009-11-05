@@ -16,13 +16,14 @@ type gui =
   main_view_hbox : GPack.box;
   sidebar_vbox : GPack.box;
   statusbar : GMisc.statusbar_context;
+  about_win : GWindow.about_dialog;
   main_img : GMisc.image;
   gl_area : GlGtk.area;
 }
 
 (*An useless fonction*)
 let void () = ()
-	  
+
 (*Terminate application*)
 let destroy () =
   GMain.Main.quit ()
@@ -37,18 +38,61 @@ let ask_destroy ev =
     ~buttons:GWindow.Buttons.yes_no
     ~destroy_with_parent:true
     ~title:"Quit ?"
-    ~deletable:false
-    ~focus_on_map:true
     ~position:`CENTER_ON_PARENT
     ~resizable:false
     ~show:true () in
     match ask_dialog#run () with
-      | `YES -> 
+      | `YES ->
 	  destroy (); (*bricolage pour gérer la fermeture à partir du menu*)
 	  false
       | _    ->
 	  ask_dialog#destroy ();
 	  true
+
+(* --- ABOUT WINDOW --- *)
+let licence2string =
+  let file = open_in "resources/gpl-3.0.txt" in
+  let rec cat_in result =
+    try
+      cat_in (result ^ (input_line file) ^ "\n")
+    with End_of_file -> close_in file; result
+  in
+    cat_in ""
+
+let create_about_win ~window () =
+  let win = GWindow.about_dialog
+    ~authors:
+    ["Guillaume Algis [algis_g@epita.fr]";
+     "Perrine Brunel [brunel_a@epita.fr]";
+     "Hugo Damme [damme_h@epita.fr]";
+     "Yohann Vergez [vergez_y@epita.fr]"]
+    ~copyright:"Copyright 2009 Pineapple"
+    ~license:licence2string
+    ~logo:((GMisc.image ~file:"resources/olympe-logo.png" ())#pixbuf)
+    ~name:"Olympe"
+    ~title:"Olympe"
+    ~version:"0.9"
+    ~website:"http://olympe-pineapple.fr.nf/"
+    ~website_label:"Olympe developpers' blog"
+    ~parent:window
+    ~destroy_with_parent:true
+    ~modal:false
+    ~position:`CENTER_ON_PARENT
+    ~resizable:false
+    ~show:false () in
+    win
+
+let init_about_win ~gui () =
+  let hide_about ev =
+    gui.about_win#misc#hide ()
+  and event_hide_about ev =
+    gui.about_win#misc#hide ();
+    true
+  in
+    gui.about_win#connect#response ~callback:hide_about;
+    gui.about_win#event#connect#delete
+      ~callback:event_hide_about;
+    ()
 
 (*Create the main window*)
 let create_main_window () =
@@ -71,7 +115,7 @@ let create_main_window () =
 let add_stock_item menu ~stock ~callback () =
   let item = GMenu.image_menu_item
     ~stock
-    ~packing:menu#append () in 
+    ~packing:menu#append () in
     item#connect#activate ~callback;
     item
 
@@ -99,26 +143,26 @@ let add_submenu menu ~label ~filename ~subitems () =
     List.iter create_subitem subitems
 
 (*Create the main menu bar (a the top of the window*)
-let create_main_menubar ~packing =
+let create_main_menubar ~packing ~about_win () =
   let menu_bar = GMenu.menu_bar
     ~packing () in
 
   (*Déclaration du menu File*)
-  let menu_file_title = GMenu.menu_item 
+  let menu_file_title = GMenu.menu_item
     ~label:"File"
     ~packing:menu_bar#append () in
   let menu_file = GMenu.menu
     ~packing:menu_file_title#set_submenu () in
 
   (*Déclaration du menu View*)
-  let menu_view_title = GMenu.menu_item 
+  let menu_view_title = GMenu.menu_item
     ~label:"View"
     ~packing:menu_bar#append () in
   let menu_view = GMenu.menu
     ~packing:menu_view_title#set_submenu () in
-  
+
   (*Déclaration du menu Help*)
-  let menu_help_title = GMenu.menu_item 
+  let menu_help_title = GMenu.menu_item
     ~label:"?"
     ~packing:menu_bar#append () in
   let menu_help = GMenu.menu
@@ -133,7 +177,7 @@ let create_main_menubar ~packing =
 
       add_submenu menu_view
 	~label:"View mode"
-	~filename:"eye.png"   
+	~filename:"eye.png"
 	~subitems:[("Free",void);
 		   ("First person",void)] ();
       add_submenu menu_view
@@ -142,25 +186,26 @@ let create_main_menubar ~packing =
 	~subitems:[("Wireframe",void);
 		   ("Plain",void)] ();
       add_submenu menu_view
-	~label:"Camera"        
+	~label:"Camera"
 	~filename:"cam.png"
 	~subitems:[("Rotate...",void);
 		   ("Scale...",void);
 		   ("Zoom...",void);
 		   ("Position...",void)] ();
       add_submenu menu_view
-	~label:"Light"    
+	~label:"Light"
 	~filename:"light.png"
 	~subitems:[("Color...",void);
 		   ("Rotate...",void);
 		   ("Position",void)] ();
-      
-      add_stock_item menu_help ~stock:`ABOUT ~callback:void ();
+
+      add_stock_item menu_help ~stock:`ABOUT
+	~callback:(about_win#misc#show) ();
       add_stock_item menu_help ~stock:`HELP  ~callback:void ();
       menu_view_title#misc#set_sensitive false;
-      
+
       menu_bar
-      
+
 (* --- STATUS BAR --- *)
 let create_status_bar ~packing =
   let statbar = GMisc.statusbar
@@ -173,7 +218,7 @@ let create_gl_area ~packing ?show () =
   let area = GlGtk.area
     [`RGBA;`DEPTH_SIZE 1;`DOUBLEBUFFER]
     ~width:500
-    ~height:500 
+    ~height:500
     ?show
     ~packing () in
     area
@@ -186,9 +231,9 @@ let create_sidebar ~packing () =
     ~border_width:5
     ~packing () in
   let appercu = GMisc.image
-    ~file:"resources/sidebar/appercu.bmp"
+    ~show:false
     ~packing:appercu_area#add () in
-    appercu#clear ()
+    ()
 
 (* --- TOOLBAR --- *)
 type tool_button =
@@ -202,7 +247,7 @@ let create_toolbar ~packing ~buttons ?show () =
     ~height:80
     ?show
     ~packing () in
-    
+
   let add_tool_button = function
       Separator ->
 	toolbar#insert_space ();
@@ -217,7 +262,7 @@ let create_toolbar ~packing ~buttons ?show () =
     toolbar
 
 (* --- CHANGING GUI APPEARANCE --- *)
-let rec update_gui_status state ~gui () = 
+let rec update_gui_status state ~gui () =
   match state with
       0 -> update_gui_status 1 ~gui ();
     | 1 ->
@@ -242,17 +287,17 @@ let rec update_gui_status state ~gui () =
 let create_state_buttons ~packing () =
   let button1 = GButton.button
     ~label:"1 Pre-treatment"
-    ~packing () 
+    ~packing ()
   and button2 = GButton.button
     ~label:"2. Sampling"
     ~packing ()
   and button3 = GButton.button
     ~label:"3. 3D view"
     ~packing () in
-    
+
   let buttons = [|button1;button2;button3|] in
 (*    Array.iter (fun b -> b#misc#set_sensitive false) buttons;*)
-	
+
     buttons
 
 let init_state_buttons ~gui () =
@@ -269,19 +314,21 @@ let activate_state_button i ~buttons () =
 			   ~file:"resources/statebar/ok.png");
   buttons.(i)#connect#pressed ~callback:void
 
-
 (* --- GUI INIT --- *)
 let init () =
   (* widgets witch do not change along the program execution *)
   let window = create_main_window () in
 
+  let about_win = create_about_win ~window () in
+
   let main_vbox = GPack.vbox
     ~homogeneous:false
     ~packing:window#add () in
 
-  (* theses widgets may change according to status of the program *) 
+  (* theses widgets may change according to status of the program *)
   let menubar = create_main_menubar
-    ~packing:(main_vbox#pack ~expand:false) in
+    ~packing:(main_vbox#pack ~expand:false)
+    ~about_win:about_win () in
 
   let toolbars = [|
     (create_toolbar
@@ -309,7 +356,7 @@ let init () =
        ~buttons:([
 		   Button("Save 3D model","document-save.svg","Save .obj file");
 		   Separator;
-		   Button("Camera mode","camera-web.svg","Take the control of the camera");
+		   Button("Camera mode","camera-web.svg","Take control of the camera");
 		   Separator;
 		   Button("Free","view-fullscreen.svg","Switch to free
     camera mode");
@@ -325,7 +372,7 @@ let init () =
     ~height:34
     ~border_width:2
     ~packing:(main_vbox#pack ~expand:false) () in
-    
+
   let state_buttons = create_state_buttons
     ~packing:program_state_hbox#add () in
 
@@ -340,7 +387,7 @@ let init () =
 
   let statusbar = create_status_bar
     ~packing:(main_vbox#pack ~expand:false) in
-    
+
   (* Declaration of 3 components of main view *)
   let main_img = GMisc.image
     ~packing:main_view_hbox#add
@@ -355,7 +402,7 @@ let init () =
     inter = 42;
     obj_file_src = "resources/tmp/final_obj.obj";
     prog_state = 0;
-    
+
     window = window;
     main_vbox = main_vbox;
     menubar = menubar;
@@ -365,10 +412,12 @@ let init () =
     main_view_hbox = main_view_hbox;
     sidebar_vbox = sidebar_vbox;
     statusbar = statusbar;
+    about_win = about_win;
     main_img = main_img;
     gl_area = gl_area;
   } in
 
     init_state_buttons ~gui:guiWidgets ();
-
+    init_about_win ~gui:guiWidgets ();
+    
     window#show ();
