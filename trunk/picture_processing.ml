@@ -88,7 +88,6 @@ let edge_img file out_file =
   let dst = Sdlvideo.create_RGB_surface_format src [] w h in
     Sdlvideo.lock src;
     Sdlvideo.lock dst;
-
     for j = 0 to (w-1) do
       for i = 0 to (h-1) do
         if ((sobel src i j h w) = 0) then
@@ -105,11 +104,9 @@ let edge_img file out_file =
 
     let out_filename =
       if out_file = "NONE" then
-	  "resources/tmp/" ^ without_ext(file) ^ "-edged.bmp"
+	"resources/tmp/" ^ without_ext(file) ^ "-edged.bmp"
       else
 	out_file
     in
-
-
       Sdlvideo.save_BMP dst out_filename;
       (out_filename, List.length !list, !list)
