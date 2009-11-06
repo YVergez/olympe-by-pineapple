@@ -68,6 +68,7 @@ let  incr_list list =
       list = put_in_place list;
     done;
     list
+
 (*Ecrit les differentes couleurs et leurs altitudes correspondantes
 dans un fichier texte "colors"*)
 
