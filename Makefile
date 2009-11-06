@@ -1,6 +1,6 @@
 OCAMLMAKEFILE = OCamlMakefile
 
-SOURCES = gui.mli gui.ml picture_processing.ml main.mli main.ml
+SOURCES = gui.mli gui.ml picture_processing.mli picture_processing.ml main.mli main.ml
 RESULT  = olympe
 INCDIRS = +lablgtk2 +lablGL +sdl
 LIBS = bigarray sdl sdlloader str

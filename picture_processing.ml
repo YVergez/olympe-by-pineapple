@@ -56,17 +56,18 @@ let without_ext s =
 
 let  incr_list list =
   let rec put_in_place = function
-      []|e::[] as x -> x
+      [] -> []
+    |e::[] -> e::[]
     |(r1,g1,b1,h1)::(r2,g2,b2,h2)::l ->
-     if h1 > h2 then
-       (r2,g2,b2,h2)::(incr_list ((r1,g1,b1,h1)::l))
-     else
-       (r1,g1,b1,h1)::(incr_list ((r2,g2,b2,h2)::l))
+       if h1 > h2 then
+	 (r2,g2,b2,h2)::(put_in_place ((r1,g1,b1,h1)::l))
+       else
+	 (r1,g1,b1,h1)::(put_in_place ((r2,g2,b2,h2)::l))
   in
     for i = 0 to ((List.length list)/2) do
-      list = incr_list list;
-    done
-      list
+      list = put_in_place list;
+    done;
+    list
 (*Ecrit les differentes couleurs et leurs altitudes correspondantes
 dans un fichier texte "colors"*)
 
