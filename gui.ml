@@ -7,6 +7,7 @@ and prog_state = ref 0
 
 and window = ref (GWindow.window ())
 and loading_window = ref (GWindow.dialog ())
+and help_window = ref (GWindow.message_dialog ~message_type:`QUESTION ~buttons:GWindow.Buttons.close())
 and main_vbox = ref (GPack.vbox ())
 and menubar = ref (GMenu.menu_bar ())
 and toolbars = ref (Array.make 3 (GButton.toolbar ()))
@@ -29,7 +30,12 @@ let void () = ()
 let destroy () =
   GMain.Main.quit ()
 
-(* Change button apparence to running *)
+(* Show help window *)
+let show_help () =
+  match !help_window#run () with
+      _ -> !help_window#misc#hide ()
+
+(* Create a gnome foot window *)
 let create_loading_window ?(text="Loading...\nPlease wait.") () =
   let win = GWindow.dialog
     ~no_separator:true
@@ -51,6 +57,24 @@ let create_loading_window ?(text="Loading...\nPlease wait.") () =
       ~packing:win#vbox#add () in
       loading_window := win;
       win#misc#show ()
+
+(* Create help window *)
+let create_help_window () =
+  let win = GWindow.message_dialog
+    ~message:"\nNeed help ?"
+    ~message_type:`QUESTION
+    ~buttons:GWindow.Buttons.close
+    ~parent:!window
+    ~destroy_with_parent:true
+    ~title:"Help"
+    ~position:`CENTER_ON_PARENT
+    ~show:false () in
+  let b = GButton.link_button
+    ~label:""
+    "http://www.google.com/"
+    ~packing:win#vbox#add () in
+    b#set_image (GMisc.image ~file:"resources/google.png" ())#coerce;
+    help_window := win
 
 (* Create a miniature file from filename *)
 let miniature ~width ~height ~filename () =
@@ -315,7 +339,7 @@ let create_main_menubar ~packing () =
 
       add_stock_item menu_help ~stock:`ABOUT
 	~callback:(!about_win#misc#show) ();
-      add_stock_item menu_help ~stock:`HELP  ~callback:void ();
+      add_stock_item menu_help ~stock:`HELP  ~callback:show_help ();
       menu_view_title#misc#set_sensitive false;
 
       menu_bar
@@ -448,7 +472,7 @@ let init () =
 		   Button("Open image","insert-image.svg","Open an
     image file", open_fileWin);
 		   Separator;
-		   Button("Help","help.svg","Get helped", void)
+		   Button("Help","help.svg","Get helped", show_help)
 		 ]) ());
     (create_toolbar
        ~packing:(!main_vbox#pack ~expand:false)
@@ -459,7 +483,7 @@ let init () =
 		   Button("Save image","document-save.svg","Save the
     computed image file", void);
 		   Separator;
-		   Button("Help","help.svg","Get helped", void)
+		   Button("Help","help.svg","Get helped", show_help)
 		 ]) ());
     (create_toolbar
        ~packing:(!main_vbox#pack ~expand:false)
@@ -476,7 +500,7 @@ let init () =
 		   Button("First person","eyes.png","Switch to first
     person mode", void);
 		   Separator;
-		   Button("Help","help.svg","Get helped", void)
+		   Button("Help","help.svg","Get helped", show_help)
 		 ]) ())|];
 
   program_state_hbox := GPack.hbox
@@ -512,6 +536,7 @@ let init () =
 
   init_state_buttons ();
   init_about_win ();
+  create_help_window ();
 
   !window#show ();
   GMain.Main.main ()
