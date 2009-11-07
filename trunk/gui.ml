@@ -149,7 +149,7 @@ let init_about_win () =
 (* PRE-TREATMENT *)
 (* Edge the current file *)
 let edge_image () =
-  Picture_processing.edge_img !img_src !pre_img_src;
+  Picture_processing.process_img !img_src !pre_img_src;
   update_gui_status 2 ();
   prog_state := 2
 
