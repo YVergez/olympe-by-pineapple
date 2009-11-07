@@ -1,25 +1,26 @@
-(* Define a record to have access to all components of the gui *)
-type gui =
-{
-  mutable img_src      : string;
-  mutable pre_img_src  : string;
-  mutable inter        : int;
-  mutable obj_file_src : string;
-  mutable prog_state   : int;
+(* All components of the gui : *)
+let img_src = ref ""
+and pre_img_src = ref "resources/tmp/pre_img.bmp"
+and inter = ref 42
+and obj_file_src = ref "resources/tmp/final_obj.obj"
+and prog_state = ref 0
 
-  window : GWindow.window;
-  main_vbox : GPack.box;
-  menubar : GMenu.menu_shell;
-  toolbars : GButton.toolbar array;
-  program_state_hbox : GPack.box;
-  state_buttons : GButton.button array;
-  main_view_hbox : GPack.box;
-  sidebar_vbox : GPack.box;
-  statusbar : GMisc.statusbar_context;
-  about_win : GWindow.about_dialog;
-  main_img : GMisc.image;
-  gl_area : GlGtk.area;
-}
+and window = ref (GWindow.window ())
+and loading_window = ref (GWindow.dialog ())
+and main_vbox = ref (GPack.vbox ())
+and menubar = ref (GMenu.menu_bar ())
+and toolbars = ref (Array.make 3 (GButton.toolbar ()))
+and program_state_hbox = ref (GPack.hbox ())
+and state_buttons = ref (Array.make 3 (GButton.button ()))
+and main_view_hbox = ref (GPack.hbox ())
+and sidebar_vbox = ref (GPack.vbox ())
+and sidebar_button = ref (GButton.button ())
+and imgPreview = ref (GMisc.image ())
+and statusbar = ref ((GMisc.statusbar ())#new_context ~name:"program_state")
+and about_win = ref (GWindow.about_dialog ())
+and open_win = ref (GWindow.file_chooser_dialog ~action:`OPEN ~title:"NULL" ())
+and main_img = ref (GMisc.image ())
+and gl_area = ref (GlGtk.area [`RGBA;`DEPTH_SIZE 1;`DOUBLEBUFFER] ())
 
 (*An useless fonction*)
 let void () = ()
@@ -27,6 +28,58 @@ let void () = ()
 (*Terminate application*)
 let destroy () =
   GMain.Main.quit ()
+
+(* Change button apparence to running *)
+let create_loading_window ?(text="Loading...\nPlease wait.") () =
+  let win = GWindow.dialog
+    ~no_separator:true
+    ~parent:!window
+    ~destroy_with_parent:true
+    ~title:"Loading..."
+    ~deletable:false
+    ~modal:true
+    ~position:`CENTER_ON_PARENT
+    ~resizable:false
+    ~width:190
+    ~height:100
+    ~show:false () in
+    GMisc.label
+      ~text:text
+      ~packing:win#vbox#add ();
+    let img = GMisc.image
+      ~file:"resources/gnome-foot.gif"
+      ~packing:win#vbox#add () in
+      loading_window := win;
+      win#misc#show ()
+
+(* Create a miniature file from filename *)
+let miniature ~width ~height ~filename () =
+  GdkPixbuf.from_file_at_size
+    filename
+    width
+    height
+
+(* --- CHANGING GUI APPEARANCE --- *)
+let rec update_gui_status state  () =
+  match state with
+      0 -> update_gui_status 1  ();
+    | 1 ->
+	(Array.of_list !menubar#children).(1)#misc#set_sensitive false;
+	!toolbars.(0)#misc#show ();
+	!toolbars.(1)#misc#hide ();
+	!toolbars.(2)#misc#hide ();
+    | 2 ->
+	(Array.of_list !menubar#children).(1)#misc#set_sensitive false;
+	!toolbars.(0)#misc#hide ();
+	!toolbars.(1)#misc#show ();
+	!toolbars.(2)#misc#hide ();
+	!main_img#set_file !pre_img_src;
+    | 3 ->
+	(Array.of_list !menubar#children).(1)#misc#set_sensitive true;
+	!toolbars.(0)#misc#hide ();
+	!toolbars.(1)#misc#hide ();
+	!toolbars.(2)#misc#show ();
+    | _ -> ()
 
 (*Ask the user if he really want to terminate the application*)
 let ask_destroy ev =
@@ -39,11 +92,10 @@ let ask_destroy ev =
     ~destroy_with_parent:true
     ~title:"Quit ?"
     ~position:`CENTER_ON_PARENT
-    ~resizable:false
-    ~show:true () in
+    ~resizable:false () in
     match ask_dialog#run () with
       | `YES ->
-	  destroy (); (*bricolage pour gérer la fermeture à partir du menu*)
+	  destroy ();
 	  false
       | _    ->
 	  ask_dialog#destroy ();
@@ -59,7 +111,7 @@ let licence2string =
   in
     cat_in ""
 
-let create_about_win ~window () =
+let create_about_win () =
   let win = GWindow.about_dialog
     ~authors:
     ["Guillaume Algis [algis_g@epita.fr]";
@@ -74,7 +126,7 @@ let create_about_win ~window () =
     ~version:"0.9"
     ~website:"http://olympe-pineapple.fr.nf/"
     ~website_label:"Olympe developpers' blog"
-    ~parent:window
+    ~parent:!window
     ~destroy_with_parent:true
     ~modal:false
     ~position:`CENTER_ON_PARENT
@@ -82,18 +134,80 @@ let create_about_win ~window () =
     ~show:false () in
     win
 
-let init_about_win ~gui () =
+let init_about_win () =
   let hide_about ev =
-    gui.about_win#misc#hide ()
+    !about_win#misc#hide ()
   and event_hide_about ev =
-    gui.about_win#misc#hide ();
+    !about_win#misc#hide ();
     true
   in
-    gui.about_win#connect#response ~callback:hide_about;
-    gui.about_win#event#connect#delete
+    !about_win#connect#response ~callback:hide_about;
+    !about_win#event#connect#delete
       ~callback:event_hide_about;
     ()
 
+(* PRE-TREATMENT *)
+(* Edge the current file *)
+let edge_image () =
+  Picture_processing.edge_img !img_src !pre_img_src;
+  update_gui_status 2 ();
+  prog_state := 2
+
+(* Check if the selectioned file is a .bmp *)
+let openwin_verify_file () =
+  (match !open_win#get_filenames with
+      [] -> ()
+    | filename::_ ->
+	let ext =
+	  try
+	    String.sub filename (String.rindex filename '.') 4
+	  with Not_found -> "DIR"
+	in
+	  if ext = ".bmp" then
+	    begin
+	      prog_state := 1;
+	      img_src := filename;
+	      !main_img#set_file filename;
+	      !main_img#misc#show ();
+	      !imgPreview#set_pixbuf (miniature
+		~filename:filename
+		~width:180
+		~height:180 ());
+	      !imgPreview#misc#show ();
+	      !sidebar_button#misc#set_sensitive true;
+	    end);
+  !open_win#destroy ()
+
+(* Create open file window *)
+let open_fileWin () =
+  let open_window = GWindow.file_chooser_dialog
+    ~action:`OPEN
+    ~parent:!window
+    ~destroy_with_parent:true
+    ~title:"Choose an image file"
+    ~icon:(GMisc.image ~file:"resources/toolbar/insert-image.svg" ())#pixbuf
+    ~modal:true
+    ~position:`CENTER_ON_PARENT
+    ~resizable:true
+    ~show:false () in
+    open_window#add_select_button_stock `OK `VALID;
+
+    (* Adding filter on .bmp *)
+    let filter = GFile.filter
+      ~name:"BMP files"
+      ~patterns:["*.bmp"] ()
+    in
+      open_window#add_filter filter;
+      open_win := open_window;
+
+      (match open_window#run () with
+	   `VALID -> openwin_verify_file ()
+	 | `DELETE_EVENT -> open_window#destroy ()
+	 | _ -> ());
+      flush stdout
+
+
+(* MAIN WINDOW *)
 (*Create the main window*)
 let create_main_window () =
   let window = GWindow.window
@@ -142,8 +256,8 @@ let add_submenu menu ~label ~filename ~subitems () =
   in
     List.iter create_subitem subitems
 
-(*Create the main menu bar (a the top of the window*)
-let create_main_menubar ~packing ~about_win () =
+(*Create the main menu bar (a the top of the window)*)
+let create_main_menubar ~packing () =
   let menu_bar = GMenu.menu_bar
     ~packing () in
 
@@ -200,7 +314,7 @@ let create_main_menubar ~packing ~about_win () =
 		   ("Position",void)] ();
 
       add_stock_item menu_help ~stock:`ABOUT
-	~callback:(about_win#misc#show) ();
+	~callback:(!about_win#misc#show) ();
       add_stock_item menu_help ~stock:`HELP  ~callback:void ();
       menu_view_title#misc#set_sensitive false;
 
@@ -226,19 +340,37 @@ let create_gl_area ~packing ?show () =
 (* --- SIDEBAR --- *)
 let create_sidebar ~packing () =
   let appercu_area = GBin.frame
+    ~label:"Preview"
+    ~label_xalign:0.05
     ~width:200
-    ~height:200
-    ~border_width:5
+    ~height:210
     ~packing () in
   let appercu = GMisc.image
     ~show:false
     ~packing:appercu_area#add () in
-    ()
+    imgPreview := appercu;
+    GPack.vbox
+      ~packing:!sidebar_vbox#add ();
+    let b = GButton.button
+      ~label:"Compute edges"
+      ~packing:(!sidebar_vbox#pack ~expand:false) () in
+      b#set_image (GMisc.image ~stock:`EXECUTE ())#coerce;
+      b#misc#set_sensitive false;
+      b#connect#clicked	~callback:edge_image;
+      sidebar_button := b;
+    GPack.vbox
+      ~height:10
+      ~packing:(!sidebar_vbox#pack ~expand:false) ();
 
 (* --- TOOLBAR --- *)
 type tool_button =
-    Button of string * string * string
+    Button of string * string * string * (unit -> unit)
   | Separator
+
+type toolbar = {
+  bar : GButton.toolbar;
+  buttons : GButton.button array;
+}
 
 let create_toolbar ~packing ~buttons ?show () =
   let toolbar = GButton.toolbar
@@ -251,37 +383,16 @@ let create_toolbar ~packing ~buttons ?show () =
   let add_tool_button = function
       Separator ->
 	toolbar#insert_space ();
-    | Button(text,icon,tooltip) ->
+    | Button(text,icon,tooltip,cb) ->
 	toolbar#insert_button
 	  ~text:text
-	  ~icon:(GMisc.image ~file:("resources/toolbar/" ^ icon) ())#coerce
-	  ~tooltip:tooltip ();
+	  ~icon:(GMisc.image ~file:("resources/toolbar/" ^ icon)())#coerce
+	  ~tooltip:tooltip
+	  ~callback:cb();
 	() in
 
     List.iter add_tool_button buttons;
     toolbar
-
-(* --- CHANGING GUI APPEARANCE --- *)
-let rec update_gui_status state ~gui () =
-  match state with
-      0 -> update_gui_status 1 ~gui ();
-    | 1 ->
-	(Array.of_list gui.menubar#children).(1)#misc#set_sensitive false;
-	gui.toolbars.(0)#misc#show ();
-	gui.toolbars.(1)#misc#hide ();
-	gui.toolbars.(2)#misc#hide ();
-    | 2 ->
-	(Array.of_list gui.menubar#children).(1)#misc#set_sensitive false;
-	gui.toolbars.(0)#misc#hide ();
-	gui.toolbars.(1)#misc#show ();
-	gui.toolbars.(2)#misc#hide ();
-    | 3 ->
-	(Array.of_list gui.menubar#children).(1)#misc#set_sensitive true;
-	gui.toolbars.(0)#misc#hide ();
-	gui.toolbars.(1)#misc#hide ();
-	gui.toolbars.(2)#misc#show ();
-    | _ -> ()
-
 
 (* --- STATE BUTTONS --- *)
 let create_state_buttons ~packing () =
@@ -300,13 +411,13 @@ let create_state_buttons ~packing () =
 
     buttons
 
-let init_state_buttons ~gui () =
-  gui.state_buttons.(0)#connect#clicked
-    ~callback:(update_gui_status 1 ~gui);
-  gui.state_buttons.(1)#connect#clicked
-    ~callback:(update_gui_status 2 ~gui);
-  gui.state_buttons.(2)#connect#clicked
-    ~callback:(update_gui_status 3 ~gui);
+let init_state_buttons  () =
+  !state_buttons.(0)#connect#clicked
+    ~callback:(update_gui_status 1 );
+  !state_buttons.(1)#connect#clicked
+    ~callback:(update_gui_status 2 );
+  !state_buttons.(2)#connect#clicked
+    ~callback:(update_gui_status 3 );
   ()
 
 let activate_state_button i ~buttons () =
@@ -317,107 +428,90 @@ let activate_state_button i ~buttons () =
 (* --- GUI INIT --- *)
 let init () =
   (* widgets witch do not change along the program execution *)
-  let window = create_main_window () in
+  window := create_main_window ();
 
-  let about_win = create_about_win ~window () in
+  about_win := create_about_win ();
 
-  let main_vbox = GPack.vbox
+  main_vbox := GPack.vbox
     ~homogeneous:false
-    ~packing:window#add () in
+    ~packing:!window#add ();
+
 
   (* theses widgets may change according to status of the program *)
-  let menubar = create_main_menubar
-    ~packing:(main_vbox#pack ~expand:false)
-    ~about_win:about_win () in
+  menubar := create_main_menubar
+    ~packing:(!main_vbox#pack ~expand:false) ();
 
-  let toolbars = [|
+  toolbars := [|
     (create_toolbar
-       ~packing:(main_vbox#pack ~expand:false)
+       ~packing:(!main_vbox#pack ~expand:false)
        ~buttons:([
 		   Button("Open image","insert-image.svg","Open an
-    image file");
+    image file", open_fileWin);
 		   Separator;
-		   Button("Help","help.svg","Get helped")
+		   Button("Help","help.svg","Get helped", void)
 		 ]) ());
     (create_toolbar
-       ~packing:(main_vbox#pack ~expand:false)
+       ~packing:(!main_vbox#pack ~expand:false)
        ~show:false
        ~buttons:([
 		   Button("Altitudes...","view-sort-ascending.svg","Modify
-    altitudes you have entered");
+    altitudes you have entered", void);
 		   Button("Save image","document-save.svg","Save the
-    computed image file");
+    computed image file", void);
 		   Separator;
-		   Button("Help","help.svg","Get helped")
+		   Button("Help","help.svg","Get helped", void)
 		 ]) ());
     (create_toolbar
-       ~packing:(main_vbox#pack ~expand:false)
+       ~packing:(!main_vbox#pack ~expand:false)
        ~show:false
        ~buttons:([
-		   Button("Save 3D model","document-save.svg","Save .obj file");
+		   Button("Save 3D model","document-save.svg","Save
+    .obj file", void);
 		   Separator;
-		   Button("Camera mode","camera-web.svg","Take control of the camera");
+		   Button("Camera mode","camera-web.svg","Take control
+    of the camera", void);
 		   Separator;
 		   Button("Free","view-fullscreen.svg","Switch to free
-    camera mode");
+    camera mode", void);
 		   Button("First person","eyes.png","Switch to first
-    person mode");
+    person mode", void);
 		   Separator;
-		   Button("Help","help.svg","Get helped")
-		 ]) ())|]
-  in
+		   Button("Help","help.svg","Get helped", void)
+		 ]) ())|];
 
-  let program_state_hbox = GPack.hbox
+  program_state_hbox := GPack.hbox
     ~homogeneous:true
     ~height:34
     ~border_width:2
-    ~packing:(main_vbox#pack ~expand:false) () in
+    ~packing:(!main_vbox#pack ~expand:false) ();
 
-  let state_buttons = create_state_buttons
-    ~packing:program_state_hbox#add () in
 
-  let main_view_hbox = GPack.hbox
-    ~packing:main_vbox#add () in
+  state_buttons := create_state_buttons
+	~packing:!program_state_hbox#add ();
 
-  let sidebar_vbox = GPack.vbox
-    ~width:220
+  main_view_hbox := GPack.hbox
+    ~border_width:20
+    ~packing:!main_vbox#add ();
+
+  sidebar_vbox := GPack.vbox
+    ~width:200
+    ~packing:(!main_view_hbox#pack ~expand:false) ();
+  create_sidebar ~packing:(!sidebar_vbox#pack ~expand:false) ();
+
+  let main_view = GBin.scrolled_window
+    ~placement:`BOTTOM_RIGHT
     ~border_width:10
-    ~packing:(main_view_hbox#pack ~expand:false) () in
-    create_sidebar ~packing:(sidebar_vbox#pack ~expand:false) ();
+    ~packing:!main_view_hbox#add () in
 
-  let statusbar = create_status_bar
-    ~packing:(main_vbox#pack ~expand:false) in
+  statusbar := create_status_bar
+    ~packing:(!main_vbox#pack ~expand:false);
 
-  (* Declaration of 3 components of main view *)
-  let main_img = GMisc.image
-    ~packing:main_view_hbox#add
-    ~show:false ()
-  and gl_area = create_gl_area
-    ~packing:main_view_hbox#add
-    ~show:false () in
+  main_img := GMisc.image
+    ~packing:main_view#add_with_viewport
+    ~show:false ();
 
-  let guiWidgets : gui = {
-    img_src = "";
-    pre_img_src = "resources/tmp/pre_img.bmp";
-    inter = 42;
-    obj_file_src = "resources/tmp/final_obj.obj";
-    prog_state = 0;
+  init_state_buttons ();
+  init_about_win ();
 
-    window = window;
-    main_vbox = main_vbox;
-    menubar = menubar;
-    toolbars = toolbars;
-    program_state_hbox = program_state_hbox;
-    state_buttons = state_buttons;
-    main_view_hbox = main_view_hbox;
-    sidebar_vbox = sidebar_vbox;
-    statusbar = statusbar;
-    about_win = about_win;
-    main_img = main_img;
-    gl_area = gl_area;
-  } in
-
-    init_state_buttons ~gui:guiWidgets ();
-    init_about_win ~gui:guiWidgets ();
-    
-    window#show ();
+  !window#show ();
+  GMain.Main.main ()
