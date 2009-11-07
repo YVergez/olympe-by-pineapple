@@ -628,7 +628,7 @@ ifndef REAL_OCAMLC
 
   ifndef LIB_PACK_NAME
     SPECIAL_OCAMLFLAGS := $(OCAMLBCFLAGS)
-  else	
+  else
     SPECIAL_OCAMLFLAGS := -for-pack $(FOR_PACK_NAME) $(OCAMLBCFLAGS)
   endif
 

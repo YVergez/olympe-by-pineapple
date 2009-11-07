@@ -26,8 +26,10 @@ Usage : olympe [OPTION...] IMAGE_FILE\n" in
 
     if !gui_mode then
       begin
+	print_endline "lol";
 	Gui.init ();
-	GMain.Main.main ();
+	print_endline "fin";
+	clean_tmp ();
       end
     else
       begin
