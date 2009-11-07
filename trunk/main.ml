@@ -41,7 +41,7 @@ Usage : olympe [OPTION...] IMAGE_FILE\n" in
 	    else
 	      begin
 	        let (out_file, alt_nb, colors) =
-		  Picture_processing.edge_img !img !pre_img in
+		  Picture_processing.process_img !img !pre_img in
 	        (*sample !pre_img !inter !obj_file;
 	        draw_3d !obj_file*)
 		  clean_tmp ();

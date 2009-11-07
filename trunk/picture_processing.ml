@@ -15,7 +15,7 @@
 aux 8 pixels entourants le pixel courant.
 Pixel en dehors de l'image : valeur du pixel central.*)
 
-let get_conv_matrix src i j h w =
+let create_matrix src i j h w =
   let mat = Array.make 9 0 in
   let cpt = ref 0 in
     for dj = (-1) to 1 do
@@ -31,19 +31,19 @@ let get_conv_matrix src i j h w =
 
 (*Applique le filtre de Sobel au pixel courant.*)
 
-let sobel src i j h w =
-  let mat = get_conv_matrix src i j h w in
-  let sobelx = (-1)*mat.(0) + 1*mat.(2) + (-2)*mat.(3)
+let filter src i j h w =
+  let mat = create_matrix src i j h w in
+  let filterx = (-1)*mat.(0) + 1*mat.(2) + (-2)*mat.(3)
     + 2*mat.(5) + (-1)*mat.(6) + 1*mat.(8)
   and
-      sobely = 1*mat.(0) +2*mat.(1) +1*mat.(2)
+      filtery = 1*mat.(0) +2*mat.(1) +1*mat.(2)
     + (-1)*mat.(6) + (-2)*mat.(7) + (-1)*mat.(8) in
-  let res = (abs(sobelx) + abs(sobely)) / 8 in
+  let res = (abs(filterx) + abs(filtery)) / 8 in
     res
 
 (*Supprime l'extension du fichier et son emplacement*)
 
-let without_ext s =
+let del_ext s =
   let i = String.rindex s '.' in
   let j =
     try
@@ -54,7 +54,7 @@ let without_ext s =
 
 (*Met la liste d'altitudes en ordre croissant*)
 
-let  incr_list list =
+let incr_list list =
   let rec put_in_place = function
       [] -> []
     |e::[] -> e::[]
@@ -97,7 +97,7 @@ let rec rm_cur_list triplet = function
 
 (*Main*)
 
-let edge_img file out_file =
+let process_img file out_file =
   let src = Sdlloader.load_image file in
   let (w,h,pitch) = Sdlvideo.surface_dims src in
   let list = ref [] in
@@ -106,7 +106,7 @@ let edge_img file out_file =
     Sdlvideo.lock dst;
     for j = 0 to (w-1) do
       for i = 0 to (h-1) do
-        if ((sobel src i j h w) = 0) then
+        if ((filter src i j h w) = 0) then
           begin
 	    let color = Sdlvideo.get_pixel src i j in
               Sdlvideo.put_pixel dst i j color;
@@ -120,7 +120,7 @@ let edge_img file out_file =
 
     let out_filename =
       if out_file = "NONE" then
-	"resources/tmp/" ^ without_ext(file) ^ "-edged.bmp"
+	"resources/tmp/" ^ del_ext(file) ^ "-edged.bmp"
       else
 	out_file
     in
