@@ -47,7 +47,7 @@ let del_ext s =
   let i = String.rindex s '.' in
   let j =
     try
-      String.rindex s '/'
+      (String.rindex s '/') + 1
     with Not_found -> 0
   in
     String.sub s j (i - j)
@@ -87,11 +87,11 @@ let rec_color list filename =
 
 (*Met a jour la liste des differentes couleurs*)
 
-let rec rm_cur_list triplet = function
+let rec rf_cur_list triplet = function
   |[] -> triplet ::[]
   |e::l ->
      if e <> triplet then
-       (e::(rm_cur_list triplet l))
+       (e::(rf_cur_list triplet l))
      else
        (e::l)
 
@@ -111,7 +111,7 @@ let process_img file out_file =
 	    let color = Sdlvideo.get_pixel src i j in
               Sdlvideo.put_pixel dst i j color;
 	      let (r,g,b) = Sdlvideo.get_pixel_color src i j in
-		list := rm_cur_list (r,g,b) !list
+		list := rf_cur_list (r,g,b) !list
           end
         else
           Sdlvideo.put_pixel_color dst i j Sdlvideo.black

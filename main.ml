@@ -5,12 +5,39 @@ let clean_tmp () =
 	Sys.remove ("resources/tmp/" ^ filenames.(i))
     done
 
+(*let clear_buf () =
+  Scanf.bscanf Scan.Scanning.stdib ""*)
+
+let ask_heights auto colors =
+  let rec heights_rec i = function
+      [] -> []
+    | (r,g,b)::t ->
+	begin
+	  Printf.printf "Witch altitude is represented by color (%d,%d,%d) (r,g,b) ? " r g b;
+	  flush stdout;
+	  if auto then
+	    begin
+	      Printf.printf "%i\n" i;
+	      flush stdout;
+	      (r,g,b,i)::(heights_rec (i + 10) t)
+	    end
+	  else
+	    begin
+	      let add h =
+		(r,g,b,h)::(heights_rec i t) in
+		Scanf.bscanf Scanf.Scanning.stdib "%d\n" add;
+	    end
+	end
+  in
+    heights_rec 0 colors
+
 let main () =
   let img      = ref ""
   and pre_img  = ref "NONE"
   and inter    = ref 10
   and obj_file = ref "resources/tmp/final_obj.obj"
   and gui_mode = ref false
+  and auto     = ref false
   and usage = "Description :
      Olympe transform a topological map in its 3D representation.\n
 Usage : olympe [OPTION...] IMAGE_FILE\n" in
@@ -19,6 +46,7 @@ Usage : olympe [OPTION...] IMAGE_FILE\n" in
       (Arg.align [
 	 ("-p", Arg.Set_string(pre_img), " save the post-treated image file.");
 	 ("-i", Arg.Set_int(inter), " set the interval for image sampling.");
+	 ("-a", Arg.Set(auto), "auto-fill the altitudes. (not recommended)");
 	 ("-o", Arg.Set_string(obj_file), " save the final 3D model (.obj)");
 	 ("-g", Arg.Set(gui_mode), " launch Olympe's GUI");
 	 ("--gui", Arg.Set(gui_mode), " launch Olympe's GUI")])
@@ -39,10 +67,15 @@ Usage : olympe [OPTION...] IMAGE_FILE\n" in
 	      failwith "The file you specified do not exists."
 	    else
 	      begin
+		print_endline "Picture processing...\n";
 	        let (out_file, alt_nb, colors) =
 		  Picture_processing.process_img !img !pre_img in
-	        (*sample !pre_img !inter !obj_file;
-	        draw_3d !obj_file*)
+		print_endline "Asking colors...\n";
+		  let cAndH = ask_heights !auto colors in
+		print_endline "Sampling...\n";
+	          Sampling.openbmp out_file !obj_file cAndH !inter;
+		print_endline "Display...\n";
+	          Display3D.draw_map "-f" !obj_file;
 		  clean_tmp ();
 	      end
 	  end
