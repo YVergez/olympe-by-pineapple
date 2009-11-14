@@ -42,7 +42,6 @@ let create_loading_window ?(text="Loading...\nPlease wait.") () =
     ~parent:!window
     ~destroy_with_parent:true
     ~title:"Loading..."
-    ~deletable:false
     ~modal:true
     ~position:`CENTER_ON_PARENT
     ~resizable:false
@@ -55,7 +54,7 @@ let create_loading_window ?(text="Loading...\nPlease wait.") () =
     let img = GMisc.image
       ~file:"resources/gnome-foot.gif"
       ~packing:win#vbox#add () in
-      loading_window := win;
+      loading_window := (win: [`DELETE_EVENT] GWindow.dialog);
       win#misc#show ()
 
 (* Create help window *)
@@ -69,11 +68,9 @@ let create_help_window () =
     ~title:"Help"
     ~position:`CENTER_ON_PARENT
     ~show:false () in
-  let b = GButton.link_button
-    ~label:""
-    "http://www.google.com/"
+  let b = GButton.button
+    ~label:"http://www.google.com/"
     ~packing:win#vbox#add () in
-    b#set_image (GMisc.image ~file:"resources/google.png" ())#coerce;
     help_window := win
 
 (* Create a miniature file from filename *)
@@ -378,7 +375,6 @@ let create_sidebar ~packing () =
     let b = GButton.button
       ~label:"Compute edges"
       ~packing:(!sidebar_vbox#pack ~expand:false) () in
-      b#set_image (GMisc.image ~stock:`EXECUTE ())#coerce;
       b#misc#set_sensitive false;
       b#connect#clicked	~callback:edge_image;
       sidebar_button := b;
