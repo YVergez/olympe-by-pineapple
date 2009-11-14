@@ -5,9 +5,6 @@ let clean_tmp () =
 	Sys.remove ("resources/tmp/" ^ filenames.(i))
     done
 
-(*let clear_buf () =
-  Scanf.bscanf Scan.Scanning.stdib ""*)
-
 let ask_heights auto colors =
   let rec heights_rec i = function
       [] -> []
