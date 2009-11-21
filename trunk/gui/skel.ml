@@ -1,3 +1,33 @@
+(* Infos on files we treat *)
+let map_file = ref ""
+and edged_file = ref "resources/tmp/edged.bmp"
+and obj_file = ref "resources/tmp/map.obj"
+
+let getMapFile () =
+  !map_file
+
+let setMapFile file =
+  map_file := file
+
+let getEdgedFile () =
+  !edged_file
+
+let setEdgedFile file =
+  edged_file := file
+
+let getObjFile () =
+  !obj_file
+
+let setObjFile file =
+  obj_file := file
+
+(* Create a miniature pixel buffer (image) from filename *)
+let createMiniature ~width ~height ~filename () =
+  GdkPixbuf.from_file_at_size
+    filename
+    width
+    height
+
 (* Define useful functions *)
 (* ... or not *)
 let void () = ()
@@ -18,14 +48,20 @@ and toolbar_vbox = GPack.vbox
   ~homogeneous:false
   ~packing:(!main_vbox#pack ~expand:false) ()
 and statebar_hbox = GPack.hbox
-  ~homogeneous:false
+  ~homogeneous:true
   ~packing:(!main_vbox#pack ~expand:false) ()
-and sidebar_vbox = GPack.vbox
+and side_and_main_hbox = GPack.hbox
   ~homogeneous:false
-  ~packing:(!main_vbox#pack ~expand:false) ()
+  ~packing:(!main_vbox#pack ~expand:true) ()
+let sidebar_vbox = GPack.vbox
+  ~homogeneous:false
+  ~width:220
+  ~border_width:10
+  ~packing:(side_and_main_hbox#pack ~expand:false) ()
 and mainview_vbox = GPack.vbox
   ~homogeneous:false
-  ~packing:(!main_vbox#pack ~expand:false) ()
+  ~border_width:10
+  ~packing:(side_and_main_hbox#pack ~expand:true) ()
 and statusbar_hbox = GPack.hbox
   ~homogeneous:false
   ~packing:(!main_vbox#pack ~expand:false) ()
@@ -75,5 +111,9 @@ let windowCreate () =
     win#add (!main_vbox#coerce);
     window := win
 
-let windowGet () =
+let getWindow () =
   !window
+
+let showOnlyChild n obj =
+  obj#misc#hide_all ();
+  (Array.of_list obj#misc#children).(n)#misc#show ()
