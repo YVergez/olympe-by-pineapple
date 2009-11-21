@@ -4,7 +4,11 @@ let init () =
   Skel.windowCreate ();
   Menubar.create ();
   Toolbar.create ();
+  Statebar.create ();
+  Sidebar.create ();
+  Mainview.init ();
+  Statusbar.create ();
 
   (* Show the window and enter program's main loop *)
-  (Skel.windowGet ())#show ();
+  (Skel.getWindow ())#show ();
   GMain.Main.main ()
