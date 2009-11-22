@@ -82,9 +82,7 @@ let extract_faces filename faces_ref =
 
 let print_triplet t =
   let (a,b,c) = t in
-    print_float a;
-    print_float b;
-    print_float c
+    Printf.printf "%i %i %i \n" a b c
 
 let print_vect3_tab tab =
   for i = 0 to ((Array.length tab) - 1) do
@@ -105,6 +103,61 @@ let print_vect4_tab tab =
     print_string "\n";
   done
 
+let make_unique_points vect_array_ref =
+  let i = ref 0
+  and res = ref [] in
+    while !i < Array.length !vect_array_ref do
+      if not (List.exists (fun x -> x = !vect_array_ref.(!i)) !res) then
+	res := !vect_array_ref.(!i)::!res;
+      i := !i + 1;
+    done;
+    Array.of_list !res
+
+let find_pos_vect x vect =
+  let i = ref 0 in
+    while (!i < Array.length vect) && (x <> vect.(!i)) do
+      i := !i + 1;
+    done;
+    if !i >= Array.length vect then
+      failwith "non trouvé"
+    else
+      !i
+
+let organise_faces faces points unique_points =
+  let i = ref 0 in
+    while !i < Array.length faces do
+      let (a,b,c) = faces.(!i) in
+	faces.(!i) <- (find_pos_vect points.(a-1) unique_points +
+			 1,find_pos_vect points.(b-1) unique_points + 1,find_pos_vect
+			   points.(c-1) unique_points + 1);
+	i := !i + 1;
+    done
+
+let antialiasing points =
+  let i = ref 0
+  and j = ref 0
+  and nb_p = ref 0
+  and temp_z = ref 0. in
+    while !i < Array.length points do
+      j := 0;
+      nb_p := 0;
+      let (x,y,z) = points.(!i) in
+	temp_z := z;
+	while !j < Array.length points do
+	  if !j <> !i then
+	    begin
+	      let (a,b,c) = points.(!j) in
+		if (abs_float (x-.a) < 10.) && (abs_float (y-.b) < 10.) then
+		  begin
+		    temp_z := !temp_z +. c;
+		    nb_p := !nb_p + 1
+		  end;
+	    end;
+	  j := !j + 1;
+	done;
+	points.(!i) <- (x,y,!temp_z/.float !nb_p);
+	i := !i + 1;
+    done
 
 let init () =
   ignore( Glut.init Sys.argv );
@@ -114,17 +167,21 @@ let init () =
   GlClear.color ~alpha:1.0 (1.0, 1.0, 1.0);
   GlClear.clear [`color;`depth]
 
+let enable () =
+  Gl.enable `depth_test
+
+let light () =
+  Gl.enable `lighting;
+  Gl.enable `color_material;
+  Gl.enable `light0;
+  GlLight.light ~num:0 (`ambient (1.0,1.0,1.0,1.0))
+
 let render vect_array faces_array draw_mode xrot yrot xpos ypos zpos () =
   GlClear.color ~alpha:1.0 (1.0, 1.0, 1.0);
   GlClear.clear [`color;`depth];
-  Gl.enable `depth_test;
-  Gl.enable `lighting;
-  Gl.enable `light0;
-  GlLight.light ~num:0 (`ambient (1.0,1.0,1.0,1.0));
-  Gl.enable `color_material;
-  Gl.enable `blend;
+  enable ();
   GlDraw.shade_model `smooth;
-  GlFunc.blend_func `src_alpha `one_minus_src_alpha;
+  (*GlFunc.blend_func `src_alpha `one_minus_src_alpha;*)
   GlMat.load_identity ();
   GlMat.translate ~z:(-10.0) ~y:(-.5.0) ();
   GlMat.rotate ~angle:!xrot ~x:1.0 ();
@@ -134,9 +191,9 @@ let render vect_array faces_array draw_mode xrot yrot xpos ypos zpos () =
   GlMat.translate ~z:5.0 ();
   for i = 0 to ((Array.length !faces_array) - 1) do
     let (a,b,c) = !faces_array.(i) in
-      let ((x,y,z):Gl.point3) = (!vect_array.(a-1))
-      and ((x2,y2,z2):Gl.point3) = (!vect_array.(b-1))
-      and ((x3,y3,z3):Gl.point3) = (!vect_array.(c-1)) in
+      let ((x,y,z):Gl.point3) = (vect_array.(a-1))
+      and ((x2,y2,z2):Gl.point3) = (vect_array.(b-1))
+      and ((x3,y3,z3):Gl.point3) = (vect_array.(c-1)) in
 	GlDraw.begins draw_mode;
 	GlDraw.color ~alpha:1.0 (0.0,0.0,(mod_float (z/.(-.50.0)) 1.0) +.0.4);
 	GlDraw.vertex3 (y/.10.0,-.z/.10.0,x/.10.0);
@@ -216,18 +273,18 @@ let draw_map mode filename =
     and faces_array_ref = ref (Array.make !nb_faces (0,0,0)) in
       extract_points file vect_array_ref;
       extract_faces file faces_array_ref;
-      init ();
-      (*Glut.gameModeString "1680x1050:32@75";
-      Glut.enterGameMode ();*)
-      Glut.keyboardFunc ~cb:(keyboard xrot yrot xpos ypos zpos);
-      Glut.displayFunc ~cb:(render vect_array_ref faces_array_ref
-			      draw_mode xrot yrot xpos ypos zpos);
-      Glut.reshapeFunc ~cb:reshape;
-      Glut.idleFunc ~cb:(Some (render vect_array_ref faces_array_ref
-				 draw_mode xrot yrot xpos ypos zpos ));
-      Glut.passiveMotionFunc ~cb:(mouse_movement lastx lasty xrot yrot);
-      Glut.mainLoop ()
-
-(*let _ = main ()*)
-
+      let uvar = make_unique_points vect_array_ref in
+	organise_faces !faces_array_ref !vect_array_ref uvar;
+	antialiasing uvar;
+	init ();
+	Glut.gameModeString "1680x1050:32@75";
+	Glut.enterGameMode ();
+	Glut.keyboardFunc ~cb:(keyboard xrot yrot xpos ypos zpos);
+	Glut.displayFunc ~cb:(render uvar faces_array_ref
+				draw_mode xrot yrot xpos ypos zpos);
+	Glut.reshapeFunc ~cb:reshape;
+	Glut.idleFunc ~cb:(Some (render uvar faces_array_ref
+				   draw_mode xrot yrot xpos ypos zpos ));
+	Glut.passiveMotionFunc ~cb:(mouse_movement lastx lasty xrot yrot);
+	Glut.mainLoop ()
 
