@@ -147,7 +147,7 @@ let antialiasing points =
 	  if !j <> !i then
 	    begin
 	      let (a,b,c) = points.(!j) in
-		if (abs_float (x-.a) < 10.) && (abs_float (y-.b) < 10.) then
+		if (abs_float (x-.a) <= 15.) && (abs_float (y-.b) <= 15.) then
 		  begin
 		    temp_z := !temp_z +. c;
 		    nb_p := !nb_p + 1
@@ -195,11 +195,13 @@ let render vect_array faces_array draw_mode xrot yrot xpos ypos zpos () =
       and ((x2,y2,z2):Gl.point3) = (vect_array.(b-1))
       and ((x3,y3,z3):Gl.point3) = (vect_array.(c-1)) in
 	GlDraw.begins draw_mode;
-	GlDraw.color ~alpha:1.0 (0.0,0.0,(mod_float (z/.(-.50.0)) 1.0) +.0.4);
+(*	Printf.printf "%f %f %f" z z2 z3;*)
+	GlDraw.color ~alpha:1.0 (0.0,0.0,(-.z +. 10.) /. 60.);
 	GlDraw.vertex3 (y/.10.0,-.z/.10.0,x/.10.0);
-	GlDraw.color ~alpha:1.0 (0.0,0.0,(mod_float (z2/.(-50.0)) 1.0) +.0.4);
+	(*GlDraw.color ~alpha:1.0 (0.0,0.0,(mod_float (z2/.(-50.0)) 1.0) +.0.4);*)
+	GlDraw.color ~alpha:1.0 (0.0,0.0,(-.z2 +. 10.) /. 60.);
 	GlDraw.vertex3 (y2/.10.0,-.z2/.10.0,x2/.10.0);
-	GlDraw.color ~alpha:1.0 (0.0,0.0,(mod_float (z3/.(-50.0)) 1.0) +.0.4);
+	GlDraw.color ~alpha:1.0 (0.0,0.0,(-.z3 +. 10.) /. 60.);
 	GlDraw.vertex3 (y3/.10.0,-.z3/.10.0,x3/.10.0);
 	GlDraw.ends ();
   done;
