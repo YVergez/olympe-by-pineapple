@@ -1,7 +1,11 @@
 let main_map_img = ref (GMisc.image ())
 and main_map_edged_img = ref (GMisc.image ())
-and main_map = ref (GBin.scrolled_window ())
-and main_map_edged = ref (GBin.scrolled_window ())
+and main_map = ref (GBin.scrolled_window
+		      ~hpolicy:`AUTOMATIC
+		      ~vpolicy:`AUTOMATIC ())
+and main_map_edged = ref (GBin.scrolled_window
+			    ~hpolicy:`AUTOMATIC
+			    ~vpolicy:`AUTOMATIC ())
 and main_3d_view = ref (GlGtk.area [`RGBA;`DEPTH_SIZE 1;`DOUBLEBUFFER] ())
 
 let init () =
