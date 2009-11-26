@@ -52,6 +52,7 @@ Usage : olympe [OPTION...] IMAGE_FILE\n" in
     if !gui_mode then
       begin
 	Gui.init ();
+	clean_tmp ();
       end
     else
       begin

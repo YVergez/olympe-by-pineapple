@@ -54,7 +54,7 @@ let create () =
 		Button("Altitudes...",
 		       "view-sort-ascending.svg",
 		       "Modify altitudes you have entered",
-		       Skel.void);
+		       Skel.showDialogAltitudes);
 		Button("Save image",
 		       "document-save.svg",
 		       "Save the computed image file",

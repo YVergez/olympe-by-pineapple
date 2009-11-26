@@ -2,6 +2,7 @@
 let map_file = ref ""
 and edged_file = ref "resources/tmp/edged.bmp"
 and obj_file = ref "resources/tmp/map.obj"
+and colors_alt = ref [(0,0,0,0)]
 
 let getMapFile () =
   !map_file
@@ -115,5 +116,97 @@ let getWindow () =
   !window
 
 let showOnlyChild n obj =
-  obj#misc#hide_all ();
-  (Array.of_list obj#misc#children).(n)#misc#show ()
+  List.iter (fun o -> o#misc#hide ()) obj#children;
+  ((Array.of_list obj#all_children).(n))#misc#show ()
+
+
+(* --- SHOW A DIALOG WITCH ASK ALTITUDES TO USER --- *)
+let showDialogAltitudes () =
+  let dialog = GWindow.dialog
+    ~parent:!window
+    ~destroy_with_parent:true
+    ~title:"Altitudes"
+    ~allow_grow:false
+    ~allow_shrink:false
+    ~modal:true
+    ~position:`CENTER_ON_PARENT
+    ~resizable:false
+    ~border_width:10
+    ~width:350
+    ~height:500 ()
+  in
+    dialog#add_button_stock `OK `VALID;
+    dialog#vbox#set_homogeneous false;
+
+    ignore (GMisc.label
+	~text:("Please complete the altitude fields\ncorresponding to the following colors :\n")
+	~packing:(dialog#vbox#pack ~expand:false) ());
+
+    (* Convert a rgb triple of int into an rgba int32 *)
+    let rgb2int r g b =
+      let r = Int32.shift_left (Int32.of_int r) 24
+      and g = Int32.shift_left (Int32.of_int g) 16
+      and b = Int32.shift_left (Int32.of_int b) 8 in
+	Int32.logor (Int32.logor r g) b in
+
+    let scroll = GBin.scrolled_window
+      ~hpolicy:`NEVER
+      ~vpolicy:`AUTOMATIC
+      ~shadow_type:`NONE
+      ~packing:(dialog#vbox#pack ~expand:true) () in
+    let scroll_box = GPack.vbox
+      ~packing:(scroll#add_with_viewport) () in
+
+    (* Used to carry user's altitudes *)
+    let user_alts = Array.make (List.length !colors_alt) (GEdit.spin_button ()) in
+
+    let rec print_colors i = function
+      [] -> ()
+      | (r,g,b,_)::t ->
+	  begin
+	    let block = GPack.hbox
+	      ~height:50
+	      ~border_width:10
+	      ~packing:(scroll_box#add) () in
+
+	    (* Spacer  30px lenght*)
+	    let _ = GPack.vbox
+	      ~width:30
+	      ~packing:(block#pack ~expand:false) () in
+
+	    let img = GMisc.image
+	      ~pixbuf:(GdkPixbuf.create
+		   ~width:90
+		   ~height:30
+		   ~colorspace:`RGB
+		   ~has_alpha:false ())
+	      ~packing:(block#pack ~expand:false) ()
+	    in
+	      GdkPixbuf.fill img#pixbuf (rgb2int r g b);
+
+	      (* Spacer  30px lenght*)
+	      let _ = GPack.vbox
+		~width:30
+		~packing:(block#pack ~expand:false) () in
+
+	      let spin = GEdit.spin_button
+		~adjustment:( GData.adjustment ~page_size:0.0 ())
+		~digits:0
+		~update_policy:`IF_VALID
+		~value:(float_of_int (i * 10))
+		~packing:(block#pack ~expand:false) () in
+
+		user_alts.(i - 1) <- spin;
+		print_colors (i + 1) t
+	  end
+    in
+      print_colors 1 !colors_alt;
+      (match dialog#run () with
+	  `VALID ->
+	    let rec put_alt i = function
+		[] -> []
+	      | (r,g,b,_)::t -> (r,g,b,user_alts.(i)#value_as_int)::(put_alt (i + 1) t)
+	    in
+	      colors_alt := put_alt 0 !colors_alt;
+	      dialog#destroy ()
+	| _ -> dialog#destroy ())
