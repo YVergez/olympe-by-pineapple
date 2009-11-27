@@ -13,6 +13,6 @@ LIBS = bigarray sdl sdlloader str lablglut
 
 OCAMLBLDFLAGS = lablgtk.cma  gtkInit.cmo lablgl.cma  lablgtkgl.cma
 OCAMLNLDFLAGS = lablgtk.cmxa gtkInit.cmx lablgl.cmxa lablgtkgl.cmxa
-OCAMLFLAGS = -warn-error A
+(*OCAMLFLAGS = -warn-error A*)
 
 include $(OCAMLMAKEFILE)

@@ -1,6 +1,6 @@
 (* --- GUI INIT --- *)
 let init () =
-  (* Create the main window *)
+  (* Create the main components of the window *)
   Skel.windowCreate ();
   Menubar.create ();
   Toolbar.create ();
@@ -8,6 +8,7 @@ let init () =
   Sidebar.create ();
   Mainview.init ();
   Statusbar.create ();
+  Toolbar.initFileDnD ();
 
   (* Show the window and enter program's main loop *)
   (Skel.getWindow ())#show ();

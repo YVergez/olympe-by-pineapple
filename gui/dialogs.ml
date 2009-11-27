@@ -40,8 +40,8 @@ let showAbout () =
 
 (* --- SHOW OPEN FILE DIALOG --- *)
 (* Verify the output of the open file dialog and update gui *)
-let verifyFile win =
-  (match win#get_filenames with
+let verifyFile ?(callback=Skel.void) filenames =
+  (match filenames with
       [] -> ()
     | filename::_ ->
 	let ext =
@@ -61,7 +61,7 @@ let verifyFile win =
 		   ~height:180 ());
 	      Sidebar.setMainButtonSensitive true 0;
 	    end);
-  win#destroy ()
+  callback ()
 
 let showOpenFile () =
   let open_window = GWindow.file_chooser_dialog
@@ -84,6 +84,6 @@ let showOpenFile () =
       open_window#add_filter filter;
 
       (match open_window#run () with
-	   `VALID -> verifyFile open_window
+	   `VALID -> verifyFile ~callback:open_window#destroy open_window#get_filenames
 	 | `DELETE_EVENT -> open_window#destroy ()
 	 | _ -> ())
