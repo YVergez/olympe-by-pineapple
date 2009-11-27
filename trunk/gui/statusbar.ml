@@ -8,13 +8,16 @@ let create () =
   Glib.Timeout.remove !last_timeout_id;
   ignore (!statusbar_context#push "Welcome to Olympe 1.2")
 
-let cleanStatusbar () =
+let cleanByTimeout id () =
   Glib.Timeout.remove !last_timeout_id;
-  !statusbar_context#pop ();
+  !statusbar_context#remove id;
   true
 
+let clean () =
+  !statusbar_context#pop ()
+
 let setInfo ?(timeout=true) text =
-  !statusbar_context#pop ();
-  ignore (!statusbar_context#push text);
+  clean ();
+  let id = !statusbar_context#push text in
   if timeout then
-    last_timeout_id := Glib.Timeout.add ~ms:5000 ~callback:cleanStatusbar
+    last_timeout_id := Glib.Timeout.add ~ms:5000 ~callback:(cleanByTimeout id)

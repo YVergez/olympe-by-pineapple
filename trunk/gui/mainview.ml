@@ -11,7 +11,7 @@ and main_map_edged = ref (GBin.scrolled_window
 and main_3d_view = ref (GlGtk.area [`RGBA;`DEPTH_SIZE 1;`DOUBLEBUFFER] ())
 and main_info_view = (GPack.vbox ())
 and main_info_text = (GMisc.label ~justify:`CENTER ~line_wrap:true ())
-and main_info_img  = (GMisc.image ~icon_size:`LARGE_TOOLBAR ())
+and main_info_img  = (GMisc.image ())
 
 let setMainInfoText text =
   main_info_text#set_text text
@@ -33,7 +33,7 @@ let init () =
   main_info_view#pack ~expand:false main_info_text#coerce;
   main_info_view#add (GPack.hbox ())#coerce;
 
-  setMainInfoText "1. Add an image to treat using the \"Open image\" button in the toolbar or drag and drop an image file here.";
+  setMainInfoText "Open an image to render using the \"Open image\" button in the toolbar or drag and drop an image file here.";
   setMainInfoImg "resources/toolbar/insert-image.svg";
 
   !main_map#add_with_viewport !main_map_img#coerce;
