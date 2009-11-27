@@ -105,3 +105,21 @@ let get = function
   | 1 -> !toolbar2
   | 2 -> !toolbar3
   | n -> failwith ("Invalid call to Toolbar.get : " ^ (string_of_int n) ^ "th element do not exist.")
+
+(* --- Enable Drag and Drop features in main view zone --- *)
+let initFileDnD () =
+  let receiveImageDrop drag_context ~x ~y data ~info ~time =
+    let filename =
+      ref (Str.global_replace (Str.regexp "file://") "" data#data)
+    in
+      filename := String.sub !filename 0 ((String.rindex !filename '.') + 4);
+      Dialogs.verifyFile [!filename];
+  in
+
+    Skel.mainview_vbox#drag#dest_set
+      ~flags:[`ALL]
+      ~actions:[`MOVE]
+      [{Gtk.target = "text/uri-list"; flags=[]; info=0}];
+    ignore (Skel.mainview_vbox#drag#connect#data_received
+	      ~callback:receiveImageDrop)
+

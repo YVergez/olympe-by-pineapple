@@ -10,8 +10,11 @@ and sidebar3_button = ref (GButton.button ())
 
 (* Callback for state 1 -> 2 PRE-TREATMENT *)
 let edgeImage () =
-  Statusbar.setInfo "Computing edges... Please wait.";
-  let (_,_,colors) = Picture_processing.process_img !Skel.map_file !Skel.edged_file
+  Statusbar.setInfo "Computing edges... Please wait." ~timeout:false;
+  (Skel.getWindow ())#misc#set_sensitive false;
+  ignore (Glib.Main.iteration false); (* Iterate the main loop to display changes on the window *)
+  let (_,_,colors) =
+    Picture_processing.process_img !Skel.map_file !Skel.edged_file
   in
   let rec add_alt = function
       [] -> []
@@ -22,8 +25,9 @@ let edgeImage () =
     Skel.showOnlyChild 1 Skel.sidebar_vbox;
     Mainview.setMainMapEdgedImg !Skel.edged_file;
     Mainview.showMainMapEdged ();
-    Skel.showDialogAltitudes ();
-    Statusbar.setInfo "Computing edges... Done."
+    Statusbar.setInfo "Computing edges... Done.";
+    (Skel.getWindow ())#misc#set_sensitive true;
+    Skel.showDialogAltitudes ()
 
 (* Create the appercu area and its image *)
 let createAppercu n () =
