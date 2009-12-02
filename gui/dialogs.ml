@@ -136,3 +136,18 @@ let showSaveFile file_type () =
 	  saveFile (List.hd win#get_uris);
 	  win#destroy ();
       | _ -> win#destroy ()
+
+
+(* --- SELECT GRID'S COLOR --- *)
+let showColorSelector () =
+  let win = GWindow.color_selection_dialog
+    ~title:"Select a grid color"
+    ~parent:(Skel.getWindow ())
+    ~destroy_with_parent:true
+    ~modal:true
+    ~position:`CENTER_ON_PARENT ()
+  in
+
+    match win#run () with
+	`OK -> win#destroy ()
+      | _ -> win#destroy ()
