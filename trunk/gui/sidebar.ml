@@ -67,6 +67,30 @@ let updateStep adj () =
   Skel.step := int_of_float adj#value;
   Mainview.refreshStepOnEdgedImg ()
 
+   (* --- dialog to select grid color --- *)
+let showColorSelector () =
+  let win = GWindow.color_selection_dialog
+    ~title:"Change grid color"
+    ~parent:(Skel.getWindow ())
+    ~destroy_with_parent:true
+    ~modal:true
+    ~position:`CENTER_ON_PARENT ()
+  in
+
+    win#colorsel#set_color !Mainview.grid_color;
+
+    match win#run () with
+ 	`OK ->
+ 	  Mainview.grid_color :=
+	    (Gdk.Color.alloc
+	       ~colormap:(Gdk.Color.get_system_colormap ())
+	       (`RGB((Gdk.Color.red win#colorsel#color),
+		     (Gdk.Color.green win#colorsel#color),
+		     (Gdk.Color.blue win#colorsel#color))));
+	  Mainview.refreshStepOnEdgedImg ();
+	  win#destroy ()
+      | _ -> win#destroy ()
+
 let createSidebar2 () =
   !sidebar2#misc#hide ();
   !sidebar2#pack (createAppercu 2 ())#coerce;
@@ -95,6 +119,10 @@ let createSidebar2 () =
     ~value_pos:`LEFT
     ~packing:(!sidebar2#pack ~expand:false) () in
 
+  let colorButton = GButton.button
+    ~label:"Change grid color"
+    ~packing:(!sidebar2#pack ~expand:false) () in
+
   let computeButt = GButton.button
     ~label:"Compute 3D model"
     ~packing:(!sidebar2#pack ~expand:false) () in
@@ -103,6 +131,7 @@ let createSidebar2 () =
 	      ~callback:Skel.void);
 
     ignore (slider#connect#value_changed ~callback:(updateStep slider#adjustment));
+    ignore (colorButton#connect#clicked ~callback:showColorSelector);
 
     sidebar2_button := computeButt;
     Skel.sidebar_vbox#pack ~expand:false !sidebar2#coerce
