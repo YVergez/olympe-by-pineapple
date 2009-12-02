@@ -9,7 +9,7 @@ SOURCES = $(PICTPROCSOURCES) $(SAMPLINGSOURCES) $(DISPLAYSOURCES) $(GUISOURCES) 
 RESULT  = olympe
 # site-lib/sdl dir is for PIE compilation
 INCDIRS = +lablgtk2 +lablGL +sdl +site-lib/sdl
-LIBS = unix bigarray sdl sdlloader str lablglut
+LIBS = unix bigarray sdl sdlloader str
 
 OCAMLBLDFLAGS = lablgtk.cma  gtkInit.cmo lablgl.cma  lablgtkgl.cma
 OCAMLNLDFLAGS = lablgtk.cmxa gtkInit.cmx lablgl.cmxa lablgtkgl.cmxa
