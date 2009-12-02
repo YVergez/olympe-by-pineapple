@@ -63,15 +63,47 @@ let createSidebar1 () =
     Skel.sidebar_vbox#add !sidebar1#coerce
 
 (* Create sidebar #2 *)
+let updateStep adj () =
+  Skel.step := int_of_float adj#value;
+  Mainview.refreshStepOnEdgedImg ()
+
 let createSidebar2 () =
   !sidebar2#misc#hide ();
   !sidebar2#pack (createAppercu 2 ())#coerce;
+
+  let step_slider = GData.adjustment
+    ~value:30.
+    ~lower:10.
+    ~upper:101.
+    ~step_incr:1.
+    ~page_incr:10.
+    ~page_size:1. ()
+  in
+
+  let _ = GMisc.label
+    ~text:"Step"
+    ~xalign:0.0
+    ~xpad:0
+    ~packing:(!sidebar2#pack ~expand:false) ()
+  in
+
+  let slider = GRange.scale
+    `HORIZONTAL
+    ~adjustment:step_slider
+    ~digits:0
+    ~draw_value:true
+    ~value_pos:`LEFT
+    ~packing:(!sidebar2#pack ~expand:false) () in
+
   let computeButt = GButton.button
     ~label:"Compute 3D model"
     ~packing:(!sidebar2#pack ~expand:false) () in
     computeButt#misc#set_sensitive true;
     ignore (computeButt#connect#clicked
-      ~callback:Skel.void);
+	      ~callback:Skel.void);
+
+    ignore (slider#connect#value_changed ~callback:(updateStep slider#adjustment));
+
     sidebar2_button := computeButt;
     Skel.sidebar_vbox#pack ~expand:false !sidebar2#coerce
 

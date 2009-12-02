@@ -2,6 +2,9 @@
 let showHelp () =
   ()
 
+(* --- SHOW ERROR --- *)
+let showErrMessage ?(title="Error") ~text () =
+  ()
 
 (* --- SHOW ABOUT DIALOG --- *)
 let licence2string file =
@@ -63,27 +66,73 @@ let verifyFile ?(callback=Skel.void) filenames =
 	    end);
   callback ()
 
+(* Create filter on .bmp *)
+let img_filter = GFile.filter
+  ~name:"BMP files"
+  ~patterns:["*.bmp"] ()
+
 let showOpenFile () =
   let open_window = GWindow.file_chooser_dialog
     ~action:`OPEN
     ~parent:(Skel.getWindow ())
     ~destroy_with_parent:true
     ~title:"Choose an image file"
-    ~icon:(GMisc.image ~file:"resources/toolbar/insert-image.svg" ())#pixbuf
     ~modal:true
     ~position:`CENTER_ON_PARENT
     ~resizable:true
     ~show:false () in
     open_window#add_select_button_stock `OK `VALID;
 
-    (* Adding filter on .bmp *)
-    let filter = GFile.filter
-      ~name:"BMP files"
-      ~patterns:["*.bmp"] ()
-    in
-      open_window#add_filter filter;
+    open_window#add_filter img_filter;
 
-      (match open_window#run () with
-	   `VALID -> verifyFile ~callback:open_window#destroy open_window#get_filenames
-	 | `DELETE_EVENT -> open_window#destroy ()
-	 | _ -> ())
+    (match open_window#run () with
+	 `VALID -> verifyFile ~callback:open_window#destroy open_window#get_filenames
+       | `DELETE_EVENT -> open_window#destroy ()
+       | _ -> ())
+
+
+(* --- SAVE FILE DIALOG --- *)
+type file = IMAGE | OBJ
+
+let saveFile location =
+  let filename =
+    try Skel.cleanFilename location
+    with Skel.IsADirectory ->
+      showErrMessage
+	~title:"Can't save the file !"
+	~text:"The file you specified is a directory" ();
+	""
+  in
+
+  Printf.printf "%s\n" (filename);
+  flush stdout;
+  Skel.copyFile "resources/tmp/edged.bmp" filename
+
+let showSaveFile file_type () =
+  let title =
+    match file_type with
+	IMAGE -> "the edged map image file"
+      | OBJ -> "the .obj file"
+  in
+
+  let win = GWindow.file_chooser_dialog
+    ~action:`SAVE
+    ~parent:(Skel.getWindow ())
+    ~destroy_with_parent:true
+    ~title:("Save " ^ title)
+    ~allow_grow:true
+    ~allow_shrink:true
+    ~modal:true
+    ~position:`CENTER_ON_PARENT
+    ~resizable:true ()
+  in
+
+    win#add_select_button_stock `SAVE `SAVE;
+    win#add_filter img_filter;
+    win#set_show_hidden false;
+
+    match win#run () with
+	`SAVE ->
+	  saveFile (List.hd win#get_uris);
+	  win#destroy ();
+      | _ -> win#destroy ()

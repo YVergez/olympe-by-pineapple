@@ -58,7 +58,7 @@ let create () =
 		Button("Save image",
 		       "document-save.svg",
 		       "Save the computed image file",
-		       Skel.void);
+		       (Dialogs.showSaveFile Dialogs.IMAGE));
 		Separator;
 		Button("Help",
 		       "help.svg",
@@ -109,11 +109,7 @@ let get = function
 (* --- Enable Drag and Drop features in main view zone --- *)
 let initFileDnD () =
   let receiveImageDrop drag_context ~x ~y data ~info ~time =
-    let filename =
-      ref (Str.global_replace (Str.regexp "file://") "" data#data)
-    in
-      filename := String.sub !filename 0 ((String.rindex !filename '.') + 4);
-      Dialogs.verifyFile [!filename];
+    Dialogs.verifyFile [Skel.cleanFilename data#data];
   in
 
     Skel.mainview_vbox#drag#dest_set
