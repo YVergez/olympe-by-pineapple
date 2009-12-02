@@ -68,13 +68,14 @@ Usage : olympe [OPTION...] IMAGE_FILE\n" in
 		print_endline "Picture processing...\n";
 	        let (out_file, alt_nb, colors) =
 		  Picture_processing.process_img !img !pre_img in
-		print_endline "Asking colors...\n";
+		  print_endline "Asking colors...\n";
 		  let cAndH = ask_heights !auto colors in
-		print_endline "Sampling...\n";
-	          Sampling.openbmp !img !obj_file cAndH !inter;
-		print_endline "Display...\n";
-	          Display3D.draw_map "-f" !obj_file;
-		  clean_tmp ();
+		    print_endline "Sampling...\n";
+	            Sampling.openbmp !img !obj_file cAndH !inter;
+		    print_endline "Display...\n";
+	            let _ =
+		      Display3D.draw_map "-f" !obj_file in
+		      clean_tmp ();
 	      end
 	  end
       end

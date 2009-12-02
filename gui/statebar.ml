@@ -40,9 +40,9 @@ let create () =
     ~label:"3. 3D view"
     ~packing:Skel.statebar_hbox#add () in
 
-    button1#misc#set_sensitive false;
+    (*button1#misc#set_sensitive false;
     button2#misc#set_sensitive false;
-    button3#misc#set_sensitive false;
+    button3#misc#set_sensitive false;*)
 
     ignore (button1#connect#clicked ~callback:(moveToState 0));
     ignore (button2#connect#clicked ~callback:(moveToState 1));

@@ -1,8 +1,11 @@
+exception IsADirectory
+
 (* Infos on files we treat *)
 let map_file = ref ""
 and edged_file = ref "resources/tmp/edged.bmp"
 and obj_file = ref "resources/tmp/map.obj"
 and colors_alt = ref [(0,0,0,0)]
+and step = ref 30
 
 let getMapFile () =
   !map_file
@@ -28,6 +31,34 @@ let createMiniature ~width ~height ~filename () =
     filename
     width
     height
+
+(* Copy a file to destination *)
+let copyFile source dest =
+  let in_chan = open_in source
+  and out_chan = open_out dest in
+  let rec cp =
+    try output_string out_chan (input_line in_chan)
+    with End_of_file -> ()
+  in
+    cp;
+    close_in in_chan;
+    close_out out_chan
+
+(* Clean a filename of type "file://location\n" *)
+let cleanFilename filename =
+  let newFilename =
+      ref (Str.global_replace (Str.regexp "file://") "" (String.escaped filename))
+  in
+  let bs_pos =
+    try String.index !newFilename '\\'
+    with Not_found -> (-1) (* If we didn't found a backslash, good for us ! *)
+  in
+    if bs_pos <> (-1) then
+      newFilename := String.sub !newFilename 0 (bs_pos);
+
+    if !newFilename.[(String.length !newFilename) - 1] = '/' then
+      raise IsADirectory; (* If string ends with a '/' it's a dir *)
+    !newFilename
 
 (* Define useful functions *)
 (* ... or not *)
@@ -79,7 +110,7 @@ let askExit ev =
     ~modal:true
     ~message:"Do you really want to exit the application ?"
     ~use_markup:true
-    ~message_type:`INFO
+    ~message_type:`WARNING
     ~buttons:GWindow.Buttons.yes_no
     ~destroy_with_parent:true
     ~title:"Quit ?"

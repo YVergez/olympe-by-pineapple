@@ -1,3 +1,7 @@
+(* Oui, j'aime pourir le code des gens :p *)
+let window = ref (GWindow.window ())
+and gui_mode = ref false
+
 let print_points nom_fichier =
   let file = open_in nom_fichier
   and s = ref "" in
@@ -159,14 +163,6 @@ let antialiasing points =
 	i := !i + 1;
     done
 
-let init () =
-  ignore( Glut.init Sys.argv );
-  Glut.initDisplayMode ~double_buffer:true ~depth:true ();
-  Glut.initWindowSize ~w:800 ~h:600 ;
-  ignore (Glut.createWindow ~title:"Olympe");
-  GlClear.color ~alpha:1.0 (1.0, 1.0, 1.0);
-  GlClear.clear [`color;`depth]
-
 let enable () =
   Gl.enable `depth_test
 
@@ -176,7 +172,7 @@ let light () =
   Gl.enable `light0;
   GlLight.light ~num:0 (`ambient (1.0,1.0,1.0,1.0))
 
-let render vect_array faces_array draw_mode xrot yrot xpos ypos zpos () =
+let render area vect_array faces_array draw_mode xrot yrot xpos ypos zpos () =
   GlClear.color ~alpha:1.0 (1.0, 1.0, 1.0);
   GlClear.clear [`color;`depth];
   enable ();
@@ -206,14 +202,15 @@ let render vect_array faces_array draw_mode xrot yrot xpos ypos zpos () =
 	GlDraw.ends ();
   done;
   GlMat.pop ();
-  Glut.swapBuffers ();
-  Glut.setCursor Glut.CURSOR_NONE
+  area#swap_buffers ()
+  (*Glut.swapBuffers ();
+  Glut.setCursor Glut.CURSOR_NONE*)
 
-let reshape ~w ~h =
-  GlDraw.viewport ~x:0 ~y:0 ~w ~h;
+let reshape ~width ~height =
+  GlDraw.viewport ~x:0 ~y:0 ~w:width ~h:height;
   GlMat.mode `projection;
   GlMat.load_identity ();
-  GluMat.perspective ~fovy:60.0 ~aspect:(1.0 *. float w /. float h) ~z:(0.1,100.0);
+  GluMat.perspective ~fovy:60.0 ~aspect:(1.0 *. float width /. float height) ~z:(0.1,100.0);
   GlMat.mode `modelview
 
 let determine_draw_mode = function
@@ -221,43 +218,83 @@ let determine_draw_mode = function
   | "-f" -> (`triangles:GlDraw.shape)
   | _ -> invalid_arg "unknown option"
 
-let keyboard xrot yrot xpos ypos zpos ~key ~x ~y =
-  if key = 27 then
-    exit 0;
-  match char_of_int key with
-      'a' -> xrot := (!xrot +. 1.0);
-	if !xrot > 360.0 then
-	  xrot := !xrot-.360.0
-    | 'w' -> xrot := (!xrot -. 1.0);
-	if !xrot < -360.0 then
-	  xrot := !xrot+.360.0
-    | 'z' -> let yrotrad = (!yrot /. 180.0 *. 3.141592654)
-	     and xrotrad = (!xrot /. 180.0 *. 3.141592654) in
-	xpos := !xpos +. (sin yrotrad);
-	zpos := !zpos -. (cos yrotrad);
-	ypos := !ypos -. (sin xrotrad)
-    | 's' -> let yrotrad = (!yrot /. 180.0 *. 3.141592654)
-	     and xrotrad = (!xrot /. 180.0 *. 3.141592654) in
-	xpos := !xpos -. (sin yrotrad);
-	zpos := !zpos +. (cos yrotrad);
-	ypos := !ypos +. (sin xrotrad)
-    | 'd' -> let yrotrad = (!yrot /. 180.0 *. 3.141592654) in
-	xpos := !xpos +. cos(yrotrad);
-	zpos := !zpos +. sin(yrotrad);
-    | 'q' -> let yrotrad = (!yrot /. 180.0 *. 3.141592654) in
-	xpos := !xpos -. cos(yrotrad);
-	zpos := !zpos -. sin(yrotrad);
-    | _ -> ()
+let keyboard xrot yrot xpos ypos zpos ev =
+  let key = GdkEvent.Key.keyval ev in
+  let char_key =
+    try char_of_int key
+    with Invalid_argument "char_of_int" -> '>' (* if the key is not a letter (arrow, etc...)*)
+  in
+    if key = 27 then
+      GMain.Main.quit ();
+    match char_key with
+	 'a' -> xrot := (!xrot +. 1.0);
+	   if !xrot > 360.0 then
+	     xrot := !xrot-.360.0
+       | 'w' -> xrot := (!xrot -. 1.0);
+	   if !xrot < -360.0 then
+	     xrot := !xrot+.360.0
+       | 'z' -> let yrotrad = (!yrot /. 180.0 *. 3.141592654)
+		and xrotrad = (!xrot /. 180.0 *. 3.141592654) in
+	   xpos := !xpos +. (sin yrotrad);
+	   zpos := !zpos -. (cos yrotrad);
+	   ypos := !ypos -. (sin xrotrad)
+       | 's' -> let yrotrad = (!yrot /. 180.0 *. 3.141592654)
+		and xrotrad = (!xrot /. 180.0 *. 3.141592654) in
+	   xpos := !xpos -. (sin yrotrad);
+	   zpos := !zpos +. (cos yrotrad);
+	   ypos := !ypos +. (sin xrotrad)
+       | 'd' -> let yrotrad = (!yrot /. 180.0 *. 3.141592654) in
+	   xpos := !xpos +. cos(yrotrad);
+	   zpos := !zpos +. sin(yrotrad);
+       | 'q' -> let yrotrad = (!yrot /. 180.0 *. 3.141592654) in
+	   xpos := !xpos -. cos(yrotrad);
+	   zpos := !zpos -. sin(yrotrad);
+       | _ -> ()
 
-let mouse_movement lastx lasty xrot yrot ~x ~y =
-  let diffx = float x -. !lastx
-  and diffy = float y -. !lasty in
-    lastx := float x;
-    lasty := float y;
+let mouse_movement lastx lasty xrot yrot ev =
+  let x = GdkEvent.Motion.x_root ev
+  and y = GdkEvent.Motion.y_root ev in
+  let diffx = x -. !lastx
+  and diffy = y -. !lasty in
+    lastx := x;
+    lasty := y;
     xrot := !xrot +. diffy /. 7.0;
     yrot := !yrot +. diffx /. 7.0
 
-let draw_map mode filename =
+let init () =
+  (*ignore( Glut.init Sys.argv );*)
+  (*Glut.initDisplayMode ~double_buffer:true ~depth:true ();
+  Glut.initWindowSize ~w:800 ~h:600 ;
+  ignore (Glut.createWindow ~title:"Olympe");*)
+
+  if not !gui_mode then
+    begin
+      let win = GWindow.window
+	~width:800
+	~height:600
+	~title:"Olympe" ()
+      in
+	ignore (win#connect#destroy
+		  ~callback:GMain.Main.quit);
+	window := win;
+    end;
+
+  let glArea = GlGtk.area
+    [`RGBA;`DEPTH_SIZE 1;`DOUBLEBUFFER]
+    ~packing:!window#add ()
+  in
+    GlClear.color ~alpha:1.0 (1.0, 1.0, 1.0);
+    GlClear.clear [`color;`depth];
+
+    glArea
+
+let draw_map mode ?(gui=false) ?(win=(!window)) filename =
+  gui_mode := gui;
+
+  (* If in GUI mode, we get the main window *)
+  if !gui_mode then
+    window := win;
+
   let nb_vects = ref 0
   and nb_faces = ref 0
   and file = filename
@@ -278,15 +315,50 @@ let draw_map mode filename =
       let uvar = make_unique_points vect_array_ref in
 	organise_faces !faces_array_ref !vect_array_ref uvar;
 	antialiasing uvar;
-	init ();
-	Glut.gameModeString "1680x1050:32@75";
-	Glut.enterGameMode ();
-	Glut.keyboardFunc ~cb:(keyboard xrot yrot xpos ypos zpos);
-	Glut.displayFunc ~cb:(render uvar faces_array_ref
-				draw_mode xrot yrot xpos ypos zpos);
-	Glut.reshapeFunc ~cb:reshape;
-	Glut.idleFunc ~cb:(Some (render uvar faces_array_ref
-				   draw_mode xrot yrot xpos ypos zpos ));
-	Glut.passiveMotionFunc ~cb:(mouse_movement lastx lasty xrot yrot);
-	Glut.mainLoop ()
 
+	let glArea = init () in
+
+	  (*Glut.gameModeString "1680x1050:32@75";
+	  Glut.enterGameMode ();
+	  Glut.keyboardFunc ~cb:(keyboard xrot yrot xpos ypos zpos);
+	  Glut.displayFunc ~cb:(render uvar faces_array_ref
+				  draw_mode xrot yrot xpos ypos zpos);
+	  Glut.reshapeFunc ~cb:reshape;
+	  Glut.idleFunc ~cb:(Some (render uvar faces_array_ref
+				     draw_mode xrot yrot xpos ypos zpos ));
+	  Glut.passiveMotionFunc ~cb:(mouse_movement lastx lasty xrot yrot);
+	  Glut.mainLoop ()*)
+
+	let render_param =
+	  render glArea uvar faces_array_ref draw_mode
+	    xrot yrot xpos ypos zpos
+	and keyboard_param =
+	  keyboard xrot yrot xpos ypos zpos
+	and mouse_mov_param =
+	  mouse_movement lastx lasty xrot yrot
+	in
+
+	  ignore (glArea#connect#display
+		    ~callback:(render_param));
+	  ignore (glArea#connect#reshape
+		    ~callback:reshape);
+
+	  (* Movements *)
+	  ignore (!window#event#add [`ALL_EVENTS]);
+	  ignore (!window#event#connect#key_press
+		    ~callback:(fun ev ->
+				 keyboard_param ev;
+				 render_param ();
+				 false));
+	  ignore (!window#event#connect#motion_notify
+		    ~callback:(fun ev ->
+				 mouse_mov_param ev;
+				 render_param ();
+				 false));
+	  (if not !gui_mode then
+	     begin
+	       !window#show ();
+	       GMain.Main.main ()
+	     end);
+
+	  glArea

@@ -12,6 +12,7 @@ and main_3d_view = ref (GlGtk.area [`RGBA;`DEPTH_SIZE 1;`DOUBLEBUFFER] ())
 and main_info_view = (GPack.vbox ())
 and main_info_text = (GMisc.label ~justify:`CENTER ~line_wrap:true ())
 and main_info_img  = (GMisc.image ())
+and edged_img_drawarea = ref (new GDraw.drawable (GDraw.pixmap ~width:10 ~height:10 ())#pixmap)
 
 let setMainInfoText text =
   main_info_text#set_text text
@@ -45,8 +46,25 @@ let init () =
 let setMainMapImg file =
   !main_map_img#set_file file
 
+let refreshStepOnEdgedImg () =
+  let area = !edged_img_drawarea in
+  let s = !Skel.step
+  and (w,h) = area#size in
+    for i = 1 to w do
+      area#line ~x:(s * i) ~y:0 ~x:(s * i) ~y:h
+    done;
+    for i = 1 to h do
+      area#line ~x:0 ~y:(s * i) ~x:w ~y:(s * i)
+    done;
+    
+    print_endline (string_of_int s)
+
 let setMainMapEdgedImg file =
-  !main_map_edged_img#set_file file
+  let edged_pixmap = GDraw.pixmap_from_xpm file () in
+    edged_img_drawarea := new GDraw.drawable
+      edged_pixmap#pixmap;
+    !main_map_edged_img#set_pixmap edged_pixmap;
+    refreshStepOnEdgedImg ()
 
 let showMainMap () =
   !main_map#misc#show ();
