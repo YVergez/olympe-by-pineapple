@@ -6,6 +6,8 @@ and edged_file = ref "resources/tmp/edged.bmp"
 and obj_file = ref "resources/tmp/map.obj"
 and colors_alt = ref [(0,0,0,0)]
 and step = ref 30
+and menubar = ref (GMenu.menu_bar ())
+and allow_inputs = ref false
 
 let getMapFile () =
   !map_file
@@ -31,6 +33,12 @@ let createMiniature ~width ~height ~filename () =
     filename
     width
     height
+
+(* Toogle allow_inputs value (true/false) *)
+let toogleAllowInputs () =
+  match !allow_inputs with
+      true -> allow_inputs := false
+    | false -> allow_inputs := true
 
 (* Copy a file to destination *)
 let copyFile source dest =
@@ -150,6 +158,9 @@ let showOnlyChild n obj =
   List.iter (fun o -> o#misc#hide ()) obj#children;
   ((Array.of_list obj#all_children).(n))#misc#show ()
 
+let setMenuSensitive n sens =
+  (Array.of_list !menubar#all_children).(n)#misc#set_sensitive sens
+
 
 (* --- SHOW A DIALOG WITCH ASK ALTITUDES TO USER --- *)
 let showDialogAltitudes () =
@@ -236,7 +247,7 @@ let showDialogAltitudes () =
 	  `VALID ->
 	    let rec put_alt i = function
 		[] -> []
-	      | (r,g,b,_)::t -> (r,g,b,user_alts.(i)#value_as_int)::(put_alt (i + 1) t)
+	      | (r,g,b,_)::t -> (r,g,b,(-1) * user_alts.(i)#value_as_int)::(put_alt (i + 1) t)
 	    in
 	      colors_alt := put_alt 0 !colors_alt;
 	      dialog#destroy ()

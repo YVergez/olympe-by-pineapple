@@ -6,7 +6,6 @@ and sidebar2 = ref (GPack.vbox ())
 and sidebar3 = ref (GPack.vbox ())
 and sidebar1_button = ref (GButton.button ())
 and sidebar2_button = ref (GButton.button ())
-and sidebar3_button = ref (GButton.button ())
 
 (* Callback for state 1 -> 2 PRE-TREATMENT *)
 let edgeImage () =
@@ -14,7 +13,8 @@ let edgeImage () =
   Mainview.setMainInfoText "Computing edges... Please wait.";
   Mainview.setMainInfoImg "resources/system-run.svg";
   Mainview.showMainInfoView ();
-  ignore (Glib.Main.iteration false); (* Iterate the main loop to display changes on the window *)
+  ignore (Glib.Main.iteration false);
+  (* Iterate the main loop to display changes on the window *)
   (Skel.getWindow ())#misc#set_sensitive false;
   ignore (Glib.Main.iteration false);
   let (_,_,colors) =
@@ -30,6 +30,27 @@ let edgeImage () =
     (Skel.getWindow ())#misc#set_sensitive true;
     Statebar.moveToState 1 ();
     Skel.showDialogAltitudes ()
+
+(* Callback for state 2 -> 3 SAMPLING *)
+let create3dModel () =
+  Statusbar.setInfo "Creating 3D model... Please wait." ~timeout:false;
+  Mainview.setMainInfoText "Creating 3D model... Please wait.";
+  Mainview.setMainInfoImg "resources/system-run.svg";
+  Mainview.showMainInfoView ();
+  Mainview.new3DViewArea ();
+  ignore (Glib.Main.iteration false);
+  (Skel.getWindow ())#misc#set_sensitive false;
+  ignore (Glib.Main.iteration false);
+  Sampling.openbmp !Skel.map_file !Skel.obj_file !Skel.colors_alt !Skel.step;
+  Statusbar.setInfo "Displaying 3D model." ~timeout:true;
+  Display3D.draw_map "-f"
+    !Skel.obj_file
+    ~gui:true
+    ~win:(Skel.getWindow ())
+    ~box:(Mainview.get3DViewArea ())
+    ~allow:Skel.allow_inputs;
+  (Skel.getWindow ())#misc#set_sensitive true;
+  Statebar.moveToState 2 ()
 
 (* Create the appercu area and its image *)
 let createAppercu n () =
@@ -128,7 +149,7 @@ let createSidebar2 () =
     ~packing:(!sidebar2#pack ~expand:false) () in
     computeButt#misc#set_sensitive true;
     ignore (computeButt#connect#clicked
-	      ~callback:Skel.void);
+	      ~callback:create3dModel);
 
     ignore (slider#connect#value_changed ~callback:(updateStep slider#adjustment));
     ignore (colorButton#connect#clicked ~callback:showColorSelector);
@@ -140,14 +161,7 @@ let createSidebar2 () =
 let createSidebar3 () =
   !sidebar3#misc#hide ();
   !sidebar3#pack (createAppercu 3 ())#coerce;
-  let computeButt = GButton.button
-    ~label:"3D"
-    ~packing:(!sidebar3#pack ~expand:false) () in
-    computeButt#misc#set_sensitive false;
-    ignore (computeButt#connect#clicked
-      ~callback:Skel.void);
-    sidebar3_button := computeButt;
-    Skel.sidebar_vbox#pack ~expand:false !sidebar3#coerce
+  Skel.sidebar_vbox#pack ~expand:false !sidebar3#coerce
 
 (* Create all sidebars *)
 let create () =
@@ -168,7 +182,6 @@ let changeAppercuImgByPixbuf pixbuf =
 let setMainButtonSensitive bool = function
     0 -> !sidebar1_button#misc#set_sensitive bool
   | 1 -> !sidebar2_button#misc#set_sensitive bool
-  | 2 -> !sidebar3_button#misc#set_sensitive bool
   | _ -> ()
 
 let get = function

@@ -227,29 +227,29 @@ let keyboard xrot yrot xpos ypos zpos ev =
     if key = 27 then
       GMain.Main.quit ();
     match char_key with
-	 'a' -> xrot := (!xrot +. 1.0);
-	   if !xrot > 360.0 then
-	     xrot := !xrot-.360.0
-       | 'w' -> xrot := (!xrot -. 1.0);
-	   if !xrot < -360.0 then
-	     xrot := !xrot+.360.0
-       | 'z' -> let yrotrad = (!yrot /. 180.0 *. 3.141592654)
-		and xrotrad = (!xrot /. 180.0 *. 3.141592654) in
-	   xpos := !xpos +. (sin yrotrad);
-	   zpos := !zpos -. (cos yrotrad);
-	   ypos := !ypos -. (sin xrotrad)
-       | 's' -> let yrotrad = (!yrot /. 180.0 *. 3.141592654)
-		and xrotrad = (!xrot /. 180.0 *. 3.141592654) in
-	   xpos := !xpos -. (sin yrotrad);
-	   zpos := !zpos +. (cos yrotrad);
-	   ypos := !ypos +. (sin xrotrad)
-       | 'd' -> let yrotrad = (!yrot /. 180.0 *. 3.141592654) in
-	   xpos := !xpos +. cos(yrotrad);
-	   zpos := !zpos +. sin(yrotrad);
-       | 'q' -> let yrotrad = (!yrot /. 180.0 *. 3.141592654) in
-	   xpos := !xpos -. cos(yrotrad);
-	   zpos := !zpos -. sin(yrotrad);
-       | _ -> ()
+	'a' -> xrot := (!xrot +. 1.0);
+	  if !xrot > 360.0 then
+	    xrot := !xrot-.360.0
+      | 'w' -> xrot := (!xrot -. 1.0);
+	  if !xrot < -360.0 then
+	    xrot := !xrot+.360.0
+      | 'z' -> let yrotrad = (!yrot /. 180.0 *. 3.141592654)
+	       and xrotrad = (!xrot /. 180.0 *. 3.141592654) in
+	  xpos := !xpos +. (sin yrotrad);
+	  zpos := !zpos -. (cos yrotrad);
+	  ypos := !ypos -. (sin xrotrad)
+      | 's' -> let yrotrad = (!yrot /. 180.0 *. 3.141592654)
+	       and xrotrad = (!xrot /. 180.0 *. 3.141592654) in
+	  xpos := !xpos -. (sin yrotrad);
+	  zpos := !zpos +. (cos yrotrad);
+	  ypos := !ypos +. (sin xrotrad)
+      | 'd' -> let yrotrad = (!yrot /. 180.0 *. 3.141592654) in
+	  xpos := !xpos +. cos(yrotrad);
+	  zpos := !zpos +. sin(yrotrad);
+      | 'q' -> let yrotrad = (!yrot /. 180.0 *. 3.141592654) in
+	  xpos := !xpos -. cos(yrotrad);
+	  zpos := !zpos -. sin(yrotrad);
+      | _ -> ()
 
 let mouse_movement lastx lasty xrot yrot ev =
   let x = GdkEvent.Motion.x_root ev
@@ -261,7 +261,7 @@ let mouse_movement lastx lasty xrot yrot ev =
     xrot := !xrot +. diffy /. 7.0;
     yrot := !yrot +. diffx /. 7.0
 
-let init () =
+let init ?box () =
   (*ignore( Glut.init Sys.argv );*)
   (*Glut.initDisplayMode ~double_buffer:true ~depth:true ();
   Glut.initWindowSize ~w:800 ~h:600 ;
@@ -279,21 +279,31 @@ let init () =
 	window := win;
     end;
 
-  let glArea = GlGtk.area
-    [`RGBA;`DEPTH_SIZE 1;`DOUBLEBUFFER]
-    ~packing:!window#add ()
+  let glArea = match box with
+      Some box -> box
+    | None ->
+	GlGtk.area
+	  [`RGBA;`DEPTH_SIZE 1;`DOUBLEBUFFER]
+	  ~packing:!window#add ()
   in
     GlClear.color ~alpha:1.0 (1.0, 1.0, 1.0);
     GlClear.clear [`color;`depth];
 
     glArea
 
-let draw_map mode ?(gui=false) ?(win=(!window)) filename =
+let draw_map mode ?(gui=false) ?win ?box ?allow filename =
   gui_mode := gui;
 
   (* If in GUI mode, we get the main window *)
-  if !gui_mode then
-    window := win;
+  (match win with
+       Some w -> window := w
+     | None -> ());
+
+  (* If in CLI mode, we have to accept inputs anytime *)
+  let allow_inputs = match allow with
+       Some b -> b
+     | None -> ref true
+  in
 
   let nb_vects = ref 0
   and nb_faces = ref 0
@@ -316,7 +326,7 @@ let draw_map mode ?(gui=false) ?(win=(!window)) filename =
 	organise_faces !faces_array_ref !vect_array_ref uvar;
 	antialiasing uvar;
 
-	let glArea = init () in
+	let glArea = init ?box () in
 
 	  (*Glut.gameModeString "1680x1050:32@75";
 	  Glut.enterGameMode ();
@@ -329,36 +339,40 @@ let draw_map mode ?(gui=false) ?(win=(!window)) filename =
 	  Glut.passiveMotionFunc ~cb:(mouse_movement lastx lasty xrot yrot);
 	  Glut.mainLoop ()*)
 
-	let render_param =
-	  render glArea uvar faces_array_ref draw_mode
-	    xrot yrot xpos ypos zpos
-	and keyboard_param =
-	  keyboard xrot yrot xpos ypos zpos
-	and mouse_mov_param =
-	  mouse_movement lastx lasty xrot yrot
-	in
+	  let render_param =
+	    render glArea uvar faces_array_ref draw_mode
+	      xrot yrot xpos ypos zpos
+	  and keyboard_param =
+	    keyboard xrot yrot xpos ypos zpos
+	  and mouse_mov_param =
+	    mouse_movement lastx lasty xrot yrot
+	  in
 
-	  ignore (glArea#connect#display
-		    ~callback:(render_param));
-	  ignore (glArea#connect#reshape
-		    ~callback:reshape);
+	    ignore (glArea#connect#display
+		      ~callback:(render_param));
+	    ignore (glArea#connect#reshape
+		      ~callback:reshape);
 
-	  (* Movements *)
-	  ignore (!window#event#add [`ALL_EVENTS]);
-	  ignore (!window#event#connect#key_press
-		    ~callback:(fun ev ->
-				 keyboard_param ev;
-				 render_param ();
-				 false));
-	  ignore (!window#event#connect#motion_notify
-		    ~callback:(fun ev ->
-				 mouse_mov_param ev;
-				 render_param ();
-				 false));
+	    ignore (glArea#event#add [`ALL_EVENTS]);
+	    ignore (!window#event#connect#key_press
+		      ~callback:(fun ev ->
+				   if !allow_inputs then
+				     begin
+				       keyboard_param ev;
+				       render_param ();
+				     end;
+				   false));
+	    ignore (!window#event#connect#motion_notify
+		      ~callback:(fun ev ->
+				   if !allow_inputs then
+				     begin
+				       mouse_mov_param ev;
+				       render_param ();
+				     end;
+				   false));
+
 	  (if not !gui_mode then
 	     begin
 	       !window#show ();
 	       GMain.Main.main ()
-	     end);
-
-	  glArea
+	     end)

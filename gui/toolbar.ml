@@ -1,7 +1,7 @@
 let toolbar1 = ref (GButton.toolbar ())
 and toolbar2 = ref (GButton.toolbar ())
 and toolbar3 = ref (GButton.toolbar ())
-
+and allow_inputs = ref false
 
 (* Define a simple variant type for easily create toolbars *)
 type tool_button =
@@ -78,7 +78,7 @@ let create () =
 		Button("Camera mode",
 		       "camera-web.svg",
 		       "Take control of the camera",
-		       Skel.void);
+		       Skel.toogleAllowInputs);
 		Separator;
 		Button("Free",
 		       "view-fullscreen.svg",
