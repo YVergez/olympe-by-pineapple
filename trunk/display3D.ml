@@ -261,6 +261,25 @@ let mouse_movement lastx lasty xrot yrot ev =
     xrot := !xrot +. diffy /. 7.0;
     yrot := !yrot +. diffx /. 7.0
 
+(* Toogle cursor appearence (hided/regular) *)
+let toogle_hide_cursor =
+  let hided = ref false in
+    function win ->
+      if not !hided then
+	begin
+	  let create_null_cursor () =
+	    let w, h = 1, 1 in
+	    let mask = Gdk.Bitmap.create ~window:win ~width:w ~height:h () in
+	    let pixmap = Gdk.Pixmap.create ~window:win ~width:w ~height:h ~depth:1 () in
+	    let color = Gdk.Color.alloc (Gdk.Color.get_system_colormap ()) (`RGB (0, 0, 0)) in
+	    Gdk.Cursor.create_from_pixmap pixmap mask color color w h
+	  in
+	    Gdk.Window.set_cursor win (create_null_cursor ())
+	end
+      else
+	Gdk.Window.set_cursor win (Gdk.Cursor.create `ARROW);
+      hided := not !hided
+
 let init ?box () =
   (*ignore( Glut.init Sys.argv );*)
   (*Glut.initDisplayMode ~double_buffer:true ~depth:true ();

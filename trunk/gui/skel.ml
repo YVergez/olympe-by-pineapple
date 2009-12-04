@@ -1,5 +1,8 @@
 exception IsADirectory
 
+(* The main window reference *)
+let window = ref (GWindow.window())
+
 (* Infos on files we treat *)
 let map_file = ref ""
 and edged_file = ref "resources/tmp/edged.bmp"
@@ -36,6 +39,7 @@ let createMiniature ~width ~height ~filename () =
 
 (* Toogle allow_inputs value (true/false) *)
 let toogleAllowInputs () =
+  Display3D.toogle_hide_cursor !window#misc#window;
   match !allow_inputs with
       true -> allow_inputs := false
     | false -> allow_inputs := true
@@ -108,8 +112,6 @@ and statusbar_hbox = GPack.hbox
 
 
 (* --- MAIN WINDOW STRUCTURE --- *)
-let window = ref (GWindow.window())
-
 (* Create a dialog asking the user if he really wanna quit.
 It is the only dialog not implemented in Dialogs module because
 it is called directly by the window (window's delete event).*)
