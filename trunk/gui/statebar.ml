@@ -15,17 +15,20 @@ let moveToState n () =
 	Mainview.showMainMap ();
 	Skel.showOnlyChild 0 Skel.toolbar_vbox;
 	Skel.showOnlyChild 0 Skel.sidebar_vbox;
+	Skel.setMenuSensitive 1 false;
     | 1 ->
 	!statebar_button1#misc#set_sensitive true;
 	!statebar_button2#misc#set_sensitive true;
 	Mainview.showMainMapEdged ();
 	Skel.showOnlyChild 1 Skel.toolbar_vbox;
 	Skel.showOnlyChild 1 Skel.sidebar_vbox;
+	Skel.setMenuSensitive 1 false;
     | 2 ->
 	!statebar_button3#misc#set_sensitive true;
 	Mainview.showMain3DView ();
 	Skel.showOnlyChild 2 Skel.toolbar_vbox;
 	Skel.showOnlyChild 2 Skel.sidebar_vbox;
+	Skel.setMenuSensitive 1 true;
     | _ -> ()
 
 (* Create the statebar *)

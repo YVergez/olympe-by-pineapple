@@ -90,5 +90,16 @@ let showMainInfoView () =
   !main_3d_view#misc#hide ();
   main_info_view#misc#show ()
 
+let new3DViewArea () =
+  (* On déconnecte le rendu pour destroy l'area *)
+  ignore (!main_3d_view#connect#display
+	    ~callback:(Skel.void));
+  ignore (!main_3d_view#connect#reshape
+	    ~callback:(fun ~width ~height -> ()));
+  !main_3d_view#destroy ();
+  main_3d_view := GlGtk.area
+    [`RGBA;`DEPTH_SIZE 1;`DOUBLEBUFFER]
+    ~packing:Skel.mainview_vbox#add ()
+
 let get3DViewArea () =
   !main_3d_view

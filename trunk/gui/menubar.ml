@@ -94,4 +94,5 @@ let create () =
       ignore (add_stock_item menu_help ~stock:`HELP  ~callback:Dialogs.showHelp ());
       menu_view_title#misc#set_sensitive false;
 
-      menubar := menu_bar
+      menubar := menu_bar;
+      Skel.menubar := menu_bar
