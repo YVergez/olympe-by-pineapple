@@ -41,13 +41,13 @@ native-code: $(OBJINT) $(SRC:.ml=.cmx)
 # Common rules
 .SUFFIXES: .ml .mli .cmo .cmi .cmx
 
-%.cmo: %.ml
+.ml.cmo:
 	$(OCAMLC) -c $(OCAMLFLAGS) $(OPTIONS) $<
 
-%.cmi: %.mli
+.mli.cmi:
 	$(OCAMLC) -c $(OCAMLFLAGS) $(OPTIONS) $<
 
-%.cmx: %.ml
+.ml.cmx:
 	$(OCAMLOPT) -c $(OCAMLFLAGS) $(OPTIONS) $<
 
 # Clean up
