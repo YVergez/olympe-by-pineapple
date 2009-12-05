@@ -367,31 +367,39 @@ let draw_map mode ?(gui=false) ?win ?box ?allow filename =
 	    mouse_movement lastx lasty xrot yrot
 	  in
 
-	    ignore (glArea#connect#display
-		      ~callback:(render_param));
-	    ignore (glArea#connect#reshape
-		      ~callback:reshape);
 
+	  let id_display =
+	    glArea#connect#display
+	      ~callback:(render_param)
+	  and id_reshape =
+	    glArea#connect#reshape
+	      ~callback:reshape
+	  and id_keyboard =
+	    !window#event#connect#key_press
+	      ~callback:(fun ev ->
+			   if !allow_inputs then
+			     begin
+			       keyboard_param ev;
+			       render_param ();
+			     end;
+			   false)
+	  and id_mouse =
+	    !window#event#connect#motion_notify
+	      ~callback:(fun ev ->
+			   if !allow_inputs then
+			     begin
+			       mouse_mov_param ev;
+			       render_param ();
+			     end;
+			   false)
+	  in
 	    ignore (glArea#event#add [`ALL_EVENTS]);
-	    ignore (!window#event#connect#key_press
-		      ~callback:(fun ev ->
-				   if !allow_inputs then
-				     begin
-				       keyboard_param ev;
-				       render_param ();
-				     end;
-				   false));
-	    ignore (!window#event#connect#motion_notify
-		      ~callback:(fun ev ->
-				   if !allow_inputs then
-				     begin
-				       mouse_mov_param ev;
-				       render_param ();
-				     end;
-				   false));
 
 	  (if not !gui_mode then
 	     begin
 	       !window#show ();
 	       GMain.Main.main ()
-	     end)
+	     end);
+
+	  (* Return ids to disconnect callbacks later *)
+	  [|[id_display;id_reshape];[id_keyboard;id_mouse]|]

@@ -15,9 +15,9 @@ OBJNAT = gtkInit.cmx $(SRC:.ml=.cmx)
 OBJMLI = $(wildcard *.mli) $(wildcard gui/*.mli)
 OBJINT = $(OBJMLI:.mli=.cmi)
 LIBS= unix bigarray sdl sdlloader str lablgtk lablgl lablgtkgl
-INCDIRS= +lablgtk2 +lablGL +sdl +site-lib/sdl gui/
+INCDIRS= +lablgtk2 +lablGL +sdl gui/
 OCAMLFLAGS= -warn-error A
-OPTIONS= $(OCAMLFLAGS) $(INCDIRS:%=-I %)
+OPTIONS= $(INCDIRS:%=-I %)
 
 #Compilation rules
 all: bc
@@ -27,7 +27,7 @@ bc: byte-code
 byte-code: $(OBJINT) $(SRC:.ml=.cmo)
 	$(OCAMLC) \
 	\
-	$(OPTIONS) $(LIBS:%=%.cma) -o $(EXEC) 	\
+	$(OCAMLFLAGS) $(OPTIONS) $(LIBS:%=%.cma) -o $(EXEC) 	\
 	$(OBJBYTE)
 
 nc: native-code
@@ -35,30 +35,36 @@ nc: native-code
 native-code: $(OBJINT) $(SRC:.ml=.cmx)
 	$(OCAMLOPT) \
 	\
-	$(OPTIONS) $(LIBS:%=%.cmxa) -o $(EXEC) 	\
+	$(OCAMLFLAGS) $(OPTIONS) $(LIBS:%=%.cmxa) -o $(EXEC) 	\
 	$(OBJNAT)
 
 # Common rules
 .SUFFIXES: .ml .mli .cmo .cmi .cmx
 
 %.cmo: %.ml
-	$(OCAMLC) -c $(OPTIONS) $<
+	$(OCAMLC) -c $(OCAMLFLAGS) $(OPTIONS) $<
 
 %.cmi: %.mli
-	$(OCAMLC) -c $(OPTIONS) $<
+	$(OCAMLC) -c $(OCAMLFLAGS) $(OPTIONS) $<
 
 %.cmx: %.ml
-	$(OCAMLOPT) -c $(OPTIONS) $<
+	$(OCAMLOPT) -c $(OCAMLFLAGS) $(OPTIONS) $<
 
 # Clean up
-clean: mrproper
-	rm -f $(EXEC) *.tar.bz2
+clean:
+	rm -f $(OBJBYTE) $(OBJNAT) $(SRC:.ml=.cmi) $(SRC:.ml=.o) *~ \#*\# gui/*~ gui/\#*\#
 
-mrproper:
-	rm -f $(OBJBYTE) $(OBJNAT) $(SRC:.ml=.cmi) $(SRC:.ml=.o) *~ \#*\#
+mrproper: clean
+	rm -f $(EXEC) *.tar.bz2 .depend
 
 .PHONY: clean mrproper
 
 #Packing up
-package: clean
-	tar -cjvC ../ -f olympe0.1_sources.tar.bz2 Olympe/
+package: mrproper
+	tar -cjvC ../ -f olympe_sources.tar.bz2 Olympe/
+
+#Dependencies
+.depend:
+	ocamldep -I gui/ $(OBJMLI) $(SRC) > .depend
+
+-include .depend

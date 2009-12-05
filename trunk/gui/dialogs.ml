@@ -71,6 +71,11 @@ let img_filter = GFile.filter
   ~name:"BMP files"
   ~patterns:["*.bmp"] ()
 
+(* Create filter on .obj *)
+let obj_filter = GFile.filter
+  ~name:"OBJ 3D model files"
+  ~patterns:["*.obj"] ()
+
 let showOpenFile () =
   let open_window = GWindow.file_chooser_dialog
     ~action:`OPEN
@@ -94,7 +99,7 @@ let showOpenFile () =
 (* --- SAVE FILE DIALOG --- *)
 type file = IMAGE | OBJ
 
-let saveFile location =
+let saveFile location file_type =
   let filename =
     try Skel.cleanFilename location
     with Skel.IsADirectory ->
@@ -104,9 +109,9 @@ let saveFile location =
 	""
   in
 
-  Printf.printf "%s\n" (filename);
-  flush stdout;
-  Skel.copyFile "resources/tmp/edged.bmp" filename
+    (match file_type with
+	 IMAGE -> Skel.copyFile !Skel.edged_file filename
+       | OBJ   -> Skel.copyFile !Skel.obj_file filename)
 
 let showSaveFile file_type () =
   let title =
@@ -128,12 +133,16 @@ let showSaveFile file_type () =
   in
 
     win#add_select_button_stock `SAVE `SAVE;
-    win#add_filter img_filter;
+    (match file_type with
+	IMAGE -> win#add_filter img_filter;
+	  win#set_current_name "my_edged_map.bmp";
+      | OBJ -> win#add_filter obj_filter;
+	  win#set_current_name "my_3D_model.obj");
     win#set_show_hidden false;
 
     match win#run () with
 	`SAVE ->
-	  saveFile (List.hd win#get_uris);
+	  saveFile (List.hd win#get_uris) file_type;
 	  win#destroy ();
       | _ -> win#destroy ()
 

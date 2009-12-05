@@ -91,11 +91,13 @@ let showMainInfoView () =
   main_info_view#misc#show ()
 
 let new3DViewArea () =
-  (* On déconnecte le rendu pour destroy l'area *)
-  ignore (!main_3d_view#connect#display
-	    ~callback:(Skel.void));
-  ignore (!main_3d_view#connect#reshape
-	    ~callback:(fun ~width ~height -> ()));
+  (* On déconnecte les callbacks pour destroy l'area *)
+  if Array.length !Skel.display_ids <> 0 then
+    begin
+      List.iter !main_3d_view#misc#disconnect !Skel.display_ids.(0);
+      List.iter (Skel.getWindow ())#misc#disconnect !Skel.display_ids.(1);
+    end;
+
   !main_3d_view#destroy ();
   main_3d_view := GlGtk.area
     [`RGBA;`DEPTH_SIZE 1;`DOUBLEBUFFER]
