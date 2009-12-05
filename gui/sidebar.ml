@@ -36,19 +36,19 @@ let create3dModel () =
   Statusbar.setInfo "Creating 3D model... Please wait." ~timeout:false;
   Mainview.setMainInfoText "Creating 3D model... Please wait.";
   Mainview.setMainInfoImg "resources/system-run.svg";
-  Mainview.showMainInfoView ();
   Mainview.new3DViewArea ();
+  Mainview.showMainInfoView ();
   ignore (Glib.Main.iteration false);
   (Skel.getWindow ())#misc#set_sensitive false;
   ignore (Glib.Main.iteration false);
   Sampling.openbmp !Skel.map_file !Skel.obj_file !Skel.colors_alt !Skel.step;
-  Statusbar.setInfo "Displaying 3D model." ~timeout:true;
-  Display3D.draw_map "-f"
+  Skel.display_ids := Display3D.draw_map "-f"
     !Skel.obj_file
     ~gui:true
     ~win:(Skel.getWindow ())
     ~box:(Mainview.get3DViewArea ())
     ~allow:Skel.allow_inputs;
+  Statusbar.setInfo "Displaying 3D model." ~timeout:true;
   (Skel.getWindow ())#misc#set_sensitive true;
   Statebar.moveToState 2 ()
 
@@ -119,10 +119,10 @@ let createSidebar2 () =
   let step_slider = GData.adjustment
     ~value:30.
     ~lower:10.
-    ~upper:101.
-    ~step_incr:1.
-    ~page_incr:10.
-    ~page_size:1. ()
+    ~upper:60.
+    ~step_incr:10.
+    ~page_incr:20.
+    ~page_size:10. ()
   in
 
   let _ = GMisc.label

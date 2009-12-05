@@ -11,6 +11,7 @@ and colors_alt = ref [(0,0,0,0)]
 and step = ref 30
 and menubar = ref (GMenu.menu_bar ())
 and allow_inputs = ref false
+and display_ids = ref ([||]:(GtkSignal.id list) array)
 
 let getMapFile () =
   !map_file

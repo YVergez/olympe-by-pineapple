@@ -73,21 +73,12 @@ let create () =
 		Button("Save 3D model",
 		       "document-save.svg",
 		       "Save .obj file",
-		       Skel.void);
+		       (Dialogs.showSaveFile Dialogs.OBJ));
 		Separator;
 		Button("Camera mode",
 		       "camera-web.svg",
 		       "Take control of the camera",
 		       Skel.toogleAllowInputs);
-		Separator;
-		Button("Free",
-		       "view-fullscreen.svg",
-		       "Switch to free camera mode",
-		       Skel.void);
-		Button("First person",
-		       "eyes.png",
-		       "Switch to first person mode",
-		       Skel.void);
 		Separator;
 		Button("Help",
 		       "help.svg",
