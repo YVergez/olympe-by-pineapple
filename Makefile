@@ -16,7 +16,7 @@ OBJMLI = $(wildcard *.mli) $(wildcard gui/*.mli)
 OBJINT = $(OBJMLI:.mli=.cmi)
 LIBS= unix bigarray sdl sdlloader str lablgtk lablgl lablgtkgl
 INCDIRS= +lablgtk2 +lablGL +sdl gui/
-OCAMLFLAGS= -warn-error A
+#OCAMLFLAGS= -warn-error A
 OPTIONS= $(INCDIRS:%=-I %)
 
 #Compilation rules
@@ -49,12 +49,16 @@ native-code: $(OBJINT) $(SRC:.ml=.cmx)
 
 .ml.cmx:
 	$(OCAMLOPT) -c $(OCAMLFLAGS) $(OPTIONS) $<
+
 # Clean up
 clean:
 	rm -f $(OBJBYTE) $(OBJNAT) $(SRC:.ml=.cmi) $(SRC:.ml=.o) *~ \#*\# gui/*~ gui/\#*\#
+
 mrproper: clean
 	rm -f $(EXEC) *.tar.bz2 .depend
+
 .PHONY: clean mrproper
+
 #Packing up
 package: mrproper
 	tar -cjvC ../ -f olympe_sources.tar.bz2 Olympe/
