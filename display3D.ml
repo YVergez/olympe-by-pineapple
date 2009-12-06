@@ -362,20 +362,25 @@ let draw_map mode ?(gui=false) ?win ?box ?allow filename =
       let uvar = make_unique_points vect_array_ref in
 	organise_faces !faces_array_ref !vect_array_ref uvar;
 	antialiasing uvar;
-	let t_points = init_points uvar
-	and  timer = init_timer 0.5 in
+
+	let t_points = init_points uvar in
+
+	let glArea = init ?box () in
+	let render_param =
+	  render glArea uvar t_points faces_array_ref draw_mode
+	    xrot yrot xpos ypos zpos
+	and keyboard_param =
+	  keyboard xrot yrot xpos ypos zpos
+	and mouse_mov_param =
+	  mouse_movement lastx lasty xrot yrot
+	in
+
+	let  timer = init_timer 0.05 in
 	  Sys.set_signal Sys.sigalrm (Sys.Signal_handle
-					(refresh_points uvar t_points));
+					(fun signal ->
+					   refresh_points uvar t_points signal;
+					   render_param ()));
 	  ignore (Unix.getitimer timer);
-	  let glArea = init ?box () in
-	  let render_param =
-	    render glArea uvar t_points faces_array_ref draw_mode
-	      xrot yrot xpos ypos zpos
-	  and keyboard_param =
-	    keyboard xrot yrot xpos ypos zpos
-	  and mouse_mov_param =
-	    mouse_movement lastx lasty xrot yrot
-	  in
 
 	  let id_display =
 	    glArea#connect#display
