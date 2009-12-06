@@ -27,7 +27,7 @@ bc: byte-code
 byte-code: $(OBJINT) $(SRC:.ml=.cmo)
 	$(OCAMLC) \
 	\
-	$(OCAMLFLAGS) $(OPTIONS) $(LIBS:%=%.cma) -o $(EXEC) 	\
+	$(OCAMLFLAGS) $(OPTIONS) $(LIBS:%=%.cma) -o $(EXEC)     \
 	$(OBJBYTE)
 
 nc: native-code
@@ -35,7 +35,7 @@ nc: native-code
 native-code: $(OBJINT) $(SRC:.ml=.cmx)
 	$(OCAMLOPT) \
 	\
-	$(OCAMLFLAGS) $(OPTIONS) $(LIBS:%=%.cmxa) -o $(EXEC) 	\
+	$(OCAMLFLAGS) $(OPTIONS) $(LIBS:%=%.cmxa) -o $(EXEC)    \
 	$(OBJNAT)
 
 # Common rules
@@ -49,16 +49,12 @@ native-code: $(OBJINT) $(SRC:.ml=.cmx)
 
 .ml.cmx:
 	$(OCAMLOPT) -c $(OCAMLFLAGS) $(OPTIONS) $<
-
 # Clean up
 clean:
 	rm -f $(OBJBYTE) $(OBJNAT) $(SRC:.ml=.cmi) $(SRC:.ml=.o) *~ \#*\# gui/*~ gui/\#*\#
-
 mrproper: clean
 	rm -f $(EXEC) *.tar.bz2 .depend
-
 .PHONY: clean mrproper
-
 #Packing up
 package: mrproper
 	tar -cjvC ../ -f olympe_sources.tar.bz2 Olympe/
