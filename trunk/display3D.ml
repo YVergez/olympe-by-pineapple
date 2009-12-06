@@ -172,8 +172,8 @@ let light () =
   Gl.enable `light0;
   GlLight.light ~num:0 (`ambient (1.0,1.0,1.0,1.0))
 
-let render area max_vect_array vect_array faces_array draw_mode xrot yrot xpos ypos
-    zpos timer =
+let render area max_vect_array vect_array faces_array draw_mode xrot yrot
+    xpos ypos zpos () =
   GlClear.color ~alpha:1.0 (1.0, 1.0, 1.0);
   GlClear.clear [`color;`depth];
   enable ();
@@ -310,7 +310,8 @@ let init_points max_points =
     done;
     res
 
-let rec refresh_points max_points points signal =
+let rec refresh_points max_points points =
+  let continue = ref false in
   let i = ref 0 in
     while !i < Array.length points do
       let (maxx,maxy,maxz) = max_points.(!i)
@@ -318,15 +319,11 @@ let rec refresh_points max_points points signal =
 	if (abs_float z) < (abs_float maxz) then
 	  begin
 	    points.(!i) <- (x,y,z +. maxz /. 100.);
+	    continue := true;
 	  end;
 	i := !i + 1;
-    done
-
-let init_timer period =
-  let timer = Unix.ITIMER_REAL in
-    ignore (Unix.setitimer timer {Unix.it_interval =
-		period;Unix.it_value = period});
-    timer
+    done;
+    !continue
 
 let draw_map mode ?(gui=false) ?win ?box ?allow filename =
   gui_mode := gui;
@@ -375,16 +372,16 @@ let draw_map mode ?(gui=false) ?win ?box ?allow filename =
 	  mouse_movement lastx lasty xrot yrot
 	in
 
-	let  timer = init_timer 0.05 in
-	  Sys.set_signal Sys.sigalrm (Sys.Signal_handle
-					(fun signal ->
-					   refresh_points uvar t_points signal;
-					   render_param ()));
-	  ignore (Unix.getitimer timer);
+	  ignore (Glib.Timeout.add ~ms:20
+		    ~callback:
+		    (fun () ->
+		       let continue = refresh_points uvar t_points in
+			 render_param ();
+			 continue));
 
 	  let id_display =
 	    glArea#connect#display
-	      ~callback:(render_param)
+	      ~callback:(fun () -> render_param ();)
 	  and id_reshape =
 	    glArea#connect#reshape
 	      ~callback:reshape
@@ -417,4 +414,3 @@ let draw_map mode ?(gui=false) ?win ?box ?allow filename =
 
 	  (* Return ids to disconnect callbacks later *)
 	  [|[id_display;id_reshape];[id_keyboard;id_mouse]|]
-
