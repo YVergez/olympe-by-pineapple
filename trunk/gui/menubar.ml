@@ -1,5 +1,26 @@
 let menubar = ref (GMenu.menu_bar ())
 
+(* Clear all values and loaded files *)
+let restartProgram () =
+  Skel.map_file :=  "";
+  Skel.edged_file :=  "resources/tmp/edged.bmp";
+  Skel.obj_file :=  "resources/tmp/map.obj";
+  Skel.colors_alt :=  [(0,0,0,0)];
+  Skel.step :=  30;
+  Skel.allow_inputs :=  false;
+  Skel.display_ids :=  ([||]:(GtkSignal.id list) array);
+  Skel.use_edges :=  true;
+
+  Mainview.setMainInfoText ("Open an image to render using the \"Open image\"" ^
+    "button in the toolbar or drag and drop an image file here.");
+  Mainview.setMainInfoImg "resources/toolbar/insert-image.svg";
+  Statebar.moveToState 0 ();
+  Mainview.showMainInfoView ();
+  !Statebar.statebar_button1#misc#set_sensitive false;
+  !Statebar.statebar_button2#misc#set_sensitive false;
+  !Statebar.statebar_button3#misc#set_sensitive false
+
+
 (* Tools for creating menubar *)
 (*Add a item from stocks to menu*)
 let add_stock_item menu ~stock ~callback () =
@@ -58,7 +79,7 @@ let create () =
   let menu_help = GMenu.menu
     ~packing:menu_help_title#set_submenu () in
 
-    ignore (add_stock_item menu_file ~stock:`NEW  ~callback:Skel.void ());
+    ignore (add_stock_item menu_file ~stock:`NEW  ~callback:restartProgram ());
     add_separator menu_file ();
     let exit_item =
       add_stock_item menu_file ~stock:`QUIT ~callback:Skel.exitProgram ()

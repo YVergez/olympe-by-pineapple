@@ -34,7 +34,8 @@ let init () =
   main_info_view#pack ~expand:false main_info_text#coerce;
   main_info_view#add (GPack.hbox ())#coerce;
 
-  setMainInfoText "Open an image to render using the \"Open image\" button in the toolbar or drag and drop an image file here.";
+  setMainInfoText ("Open an image to render using the \"Open image\"" ^
+    "button in the toolbar or drag and drop an image file here.");
   setMainInfoImg "resources/toolbar/insert-image.svg";
 
   !main_map#add_with_viewport !main_map_img#coerce;

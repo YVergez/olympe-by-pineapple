@@ -144,6 +144,13 @@ let createSidebar2 () =
     ~label:"Change grid color"
     ~packing:(!sidebar2#pack ~expand:false) () in
 
+  let check_edges = GButton.check_button
+    ~label:"Use relief borders"
+    ~use_mnemonic:true
+    ~active:true
+    ~draw_indicator:true
+    ~packing:(!sidebar2#pack ~expand:false) () in
+
   let computeButt = GButton.button
     ~label:"Compute 3D model"
     ~packing:(!sidebar2#pack ~expand:false) () in
@@ -151,8 +158,12 @@ let createSidebar2 () =
     ignore (computeButt#connect#clicked
 	      ~callback:create3dModel);
 
-    ignore (slider#connect#value_changed ~callback:(updateStep slider#adjustment));
-    ignore (colorButton#connect#clicked ~callback:showColorSelector);
+    ignore (slider#connect#value_changed
+	      ~callback:(updateStep slider#adjustment));
+    ignore (colorButton#connect#clicked
+	      ~callback:showColorSelector);
+    ignore (check_edges#connect#toggled
+	      ~callback:(fun () -> Skel.use_edges := not !Skel.use_edges));
 
     sidebar2_button := computeButt;
     Skel.sidebar_vbox#pack ~expand:false !sidebar2#coerce
