@@ -86,7 +86,7 @@ let extract_faces filename faces_ref =
 
 let print_triplet t =
   let (a,b,c) = t in
-    Printf.printf "%i %i %i \n" a b c
+    Printf.printf "%f %f %f \n" a b c
 
 let print_vect3_tab tab =
   for i = 0 to ((Array.length tab) - 1) do
@@ -172,7 +172,8 @@ let light () =
   Gl.enable `light0;
   GlLight.light ~num:0 (`ambient (1.0,1.0,1.0,1.0))
 
-let render area vect_array faces_array draw_mode xrot yrot xpos ypos zpos () =
+let render area max_vect_array vect_array faces_array draw_mode xrot yrot xpos ypos
+    zpos timer =
   GlClear.color ~alpha:1.0 (1.0, 1.0, 1.0);
   GlClear.clear [`color;`depth];
   enable ();
@@ -203,8 +204,6 @@ let render area vect_array faces_array draw_mode xrot yrot xpos ypos zpos () =
   done;
   GlMat.pop ();
   area#swap_buffers ()
-  (*Glut.swapBuffers ();
-  Glut.setCursor Glut.CURSOR_NONE*)
 
 let reshape ~width ~height =
   GlDraw.viewport ~x:0 ~y:0 ~w:width ~h:height;
@@ -281,11 +280,6 @@ let toogle_hide_cursor =
       hided := not !hided
 
 let init ?box () =
-  (*ignore( Glut.init Sys.argv );*)
-  (*Glut.initDisplayMode ~double_buffer:true ~depth:true ();
-  Glut.initWindowSize ~w:800 ~h:600 ;
-  ignore (Glut.createWindow ~title:"Olympe");*)
-
   if not !gui_mode then
     begin
       let win = GWindow.window
@@ -297,7 +291,6 @@ let init ?box () =
 		  ~callback:GMain.Main.quit);
 	window := win;
     end;
-
   let glArea = match box with
       Some box -> box
     | None ->
@@ -305,10 +298,35 @@ let init ?box () =
 	  [`RGBA;`DEPTH_SIZE 1;`DOUBLEBUFFER]
 	  ~packing:!window#add ()
   in
-    GlClear.color ~alpha:1.0 (1.0, 1.0, 1.0);
-    GlClear.clear [`color;`depth];
-
     glArea
+
+let init_points max_points =
+  let i = ref 0
+  and res = Array.make (Array.length max_points) (0.,0.,0.) in
+    while !i < Array.length max_points do
+      let (x,y,z) = max_points.(!i) in
+	res.(!i) <- (x,y,0.);
+	i := !i + 1
+    done;
+    res
+
+let rec refresh_points max_points points signal =
+  let i = ref 0 in
+    while !i < Array.length points do
+      let (maxx,maxy,maxz) = max_points.(!i)
+      and (x,y,z) = points.(!i) in
+	if (abs_float z) < (abs_float maxz) then
+	  begin
+	    points.(!i) <- (x,y,z +. maxz /. 100.);
+	  end;
+	i := !i + 1;
+    done
+
+let init_timer period =
+  let timer = Unix.ITIMER_REAL in
+    ignore (Unix.setitimer timer {Unix.it_interval =
+		period;Unix.it_value = period});
+    timer
 
 let draw_map mode ?(gui=false) ?win ?box ?allow filename =
   gui_mode := gui;
@@ -344,29 +362,20 @@ let draw_map mode ?(gui=false) ?win ?box ?allow filename =
       let uvar = make_unique_points vect_array_ref in
 	organise_faces !faces_array_ref !vect_array_ref uvar;
 	antialiasing uvar;
-
-	let glArea = init ?box () in
-
-	  (*Glut.gameModeString "1680x1050:32@75";
-	  Glut.enterGameMode ();
-	  Glut.keyboardFunc ~cb:(keyboard xrot yrot xpos ypos zpos);
-	  Glut.displayFunc ~cb:(render uvar faces_array_ref
-				  draw_mode xrot yrot xpos ypos zpos);
-	  Glut.reshapeFunc ~cb:reshape;
-	  Glut.idleFunc ~cb:(Some (render uvar faces_array_ref
-				     draw_mode xrot yrot xpos ypos zpos ));
-	  Glut.passiveMotionFunc ~cb:(mouse_movement lastx lasty xrot yrot);
-	  Glut.mainLoop ()*)
-
+	let t_points = init_points uvar
+	and  timer = init_timer 0.5 in
+	  Sys.set_signal Sys.sigalrm (Sys.Signal_handle
+					(refresh_points uvar t_points));
+	  ignore (Unix.getitimer timer);
+	  let glArea = init ?box () in
 	  let render_param =
-	    render glArea uvar faces_array_ref draw_mode
+	    render glArea uvar t_points faces_array_ref draw_mode
 	      xrot yrot xpos ypos zpos
 	  and keyboard_param =
 	    keyboard xrot yrot xpos ypos zpos
 	  and mouse_mov_param =
 	    mouse_movement lastx lasty xrot yrot
 	  in
-
 
 	  let id_display =
 	    glArea#connect#display
@@ -403,3 +412,4 @@ let draw_map mode ?(gui=false) ?win ?box ?allow filename =
 
 	  (* Return ids to disconnect callbacks later *)
 	  [|[id_display;id_reshape];[id_keyboard;id_mouse]|]
+
