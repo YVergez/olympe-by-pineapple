@@ -16,7 +16,7 @@ OBJMLI = $(wildcard *.mli) $(wildcard gui/*.mli)
 OBJINT = $(OBJMLI:.mli=.cmi)
 LIBS= unix bigarray sdl sdlloader str lablgtk lablgl lablgtkgl
 INCDIRS= +lablgtk2 +lablGL +sdl gui/
-#OCAMLFLAGS= -warn-error A
+OCAMLFLAGS= -warn-error A
 OPTIONS= $(INCDIRS:%=-I %)
 
 #Compilation rules

@@ -41,10 +41,7 @@ let createMiniature ~width ~height ~filename () =
 
 (* Toogle allow_inputs value (true/false) *)
 let toogleAllowInputs () =
-  Display3D.toogle_hide_cursor !window#misc#window;
-  match !allow_inputs with
-      true -> allow_inputs := false
-    | false -> allow_inputs := true
+  allow_inputs := not !allow_inputs
 
 (* Copy a file to destination *)
 let copyFile source dest =

@@ -1,6 +1,8 @@
 (* Oui, j'aime pourir le code des gens :p *)
+
 let window = ref (GWindow.window ())
 and gui_mode = ref false
+and reniew_coord = ref false
 
 let print_points nom_fichier =
   let file = open_in nom_fichier
@@ -183,7 +185,7 @@ let render area max_vect_array vect_array faces_array draw_mode xrot yrot
   GlMat.translate ~z:(-10.0) ~y:(-.5.0) ();
   GlMat.rotate ~angle:!xrot ~x:1.0 ();
   GlMat.rotate ~angle:!yrot ~y:1.0 ();
-  GlMat.translate ~x:(-.(!xpos)) (*~y:(-.(!ypos))*) ~z:(-.(!zpos)) ();
+  GlMat.translate ~x:(-.(!xpos)) ~y:(-.(!ypos)) ~z:(-.(!zpos)) ();
   GlMat.push ();
   GlMat.translate ~z:5.0 ();
   for i = 0 to ((Array.length !faces_array) - 1) do
@@ -223,25 +225,19 @@ let keyboard xrot yrot xpos ypos zpos ev =
     try char_of_int key
     with Invalid_argument "char_of_int" -> '>' (* if the key is not a letter (arrow, etc...)*)
   in
-    if key = 27 then
+    if key = 27 && not !gui_mode then
       GMain.Main.quit ();
     match char_key with
-	'a' -> xrot := (!xrot +. 1.0);
-	  if !xrot > 360.0 then
-	    xrot := !xrot-.360.0
-      | 'w' -> xrot := (!xrot -. 1.0);
-	  if !xrot < -360.0 then
-	    xrot := !xrot+.360.0
       | 'z' -> let yrotrad = (!yrot /. 180.0 *. 3.141592654)
-	       and xrotrad = (!xrot /. 180.0 *. 3.141592654) in
+	       (*and xrotrad = (!xrot /. 180.0 *. 3.141592654)*) in
 	  xpos := !xpos +. (sin yrotrad);
 	  zpos := !zpos -. (cos yrotrad);
-	  ypos := !ypos -. (sin xrotrad)
+	  ypos := !ypos (*-. (sin xrotrad)*)
       | 's' -> let yrotrad = (!yrot /. 180.0 *. 3.141592654)
-	       and xrotrad = (!xrot /. 180.0 *. 3.141592654) in
+	       (*and xrotrad = (!xrot /. 180.0 *. 3.141592654)*) in
 	  xpos := !xpos -. (sin yrotrad);
 	  zpos := !zpos +. (cos yrotrad);
-	  ypos := !ypos +. (sin xrotrad)
+	  ypos := !ypos (*+. (sin xrotrad)*)
       | 'd' -> let yrotrad = (!yrot /. 180.0 *. 3.141592654) in
 	  xpos := !xpos +. cos(yrotrad);
 	  zpos := !zpos +. sin(yrotrad);
@@ -250,34 +246,35 @@ let keyboard xrot yrot xpos ypos zpos ev =
 	  zpos := !zpos -. sin(yrotrad);
       | _ -> ()
 
-let mouse_movement lastx lasty xrot yrot ev =
-  let x = GdkEvent.Motion.x_root ev
-  and y = GdkEvent.Motion.y_root ev in
-  let diffx = x -. !lastx
-  and diffy = y -. !lasty in
+let mouse_movement lastx lasty xrot yrot x y =
+  let x = (float_of_int x)
+  and y = (float_of_int y) in
+    if !reniew_coord then
+      reniew_coord := false
+    else
+      (let diffx = x -. !lastx
+       and diffy = y -. !lasty in
+	 xrot := !xrot +. diffy /. 7.0;
+	 yrot := !yrot +. diffx /. 7.0;);
     lastx := x;
-    lasty := y;
-    xrot := !xrot +. diffy /. 7.0;
-    yrot := !yrot +. diffx /. 7.0
+    lasty := y
 
-(* Toogle cursor appearence (hided/regular) *)
-let toogle_hide_cursor =
-  let hided = ref false in
-    function win ->
-      if not !hided then
-	begin
-	  let create_null_cursor () =
-	    let w, h = 1, 1 in
-	    let mask = Gdk.Bitmap.create ~window:win ~width:w ~height:h () in
-	    let pixmap = Gdk.Pixmap.create ~window:win ~width:w ~height:h ~depth:1 () in
-	    let color = Gdk.Color.alloc (Gdk.Color.get_system_colormap ()) (`RGB (0, 0, 0)) in
-	    Gdk.Cursor.create_from_pixmap pixmap mask color color w h
-	  in
-	    Gdk.Window.set_cursor win (create_null_cursor ())
-	end
-      else
-	Gdk.Window.set_cursor win (Gdk.Cursor.create `ARROW);
-      hided := not !hided
+let scroll_movement xrot yrot xpos ypos zpos ev =
+  let dir = GdkEvent.Scroll.direction ev in
+    (match dir with
+	 `UP ->
+	   let yrotrad = (!yrot /. 180.0 *. 3.141592654)
+	   and xrotrad = (!xrot /. 180.0 *. 3.141592654) in
+	     xpos := !xpos +. (sin yrotrad);
+	     zpos := !zpos -. (cos yrotrad);
+	     ypos := !ypos -. (sin xrotrad)
+       | `DOWN ->
+	   let yrotrad = (!yrot /. 180.0 *. 3.141592654)
+	   and xrotrad = (!xrot /. 180.0 *. 3.141592654) in
+	     xpos := !xpos -. (sin yrotrad);
+	     zpos := !zpos +. (cos yrotrad);
+	     ypos := !ypos +. (sin xrotrad)
+       | _ -> ())
 
 let init ?box () =
   if not !gui_mode then
@@ -370,6 +367,8 @@ let draw_map mode ?(gui=false) ?win ?box ?allow filename =
 	  keyboard xrot yrot xpos ypos zpos
 	and mouse_mov_param =
 	  mouse_movement lastx lasty xrot yrot
+	and scroll_mov_param =
+	  scroll_movement xrot yrot xpos ypos zpos
 	in
 
 	  ignore (Glib.Timeout.add ~ms:20
@@ -395,15 +394,20 @@ let draw_map mode ?(gui=false) ?win ?box ?allow filename =
 			     end;
 			   false)
 	  and id_mouse =
-	    !window#event#connect#motion_notify
+	    glArea#drag#connect#motion
+	      ~callback:(fun dc ~x ~y ~time ->
+			   mouse_mov_param x y;
+			   render_param ();false);
+	  and id_reniew =
+	    glArea#drag#connect#beginning
+	      ~callback:(fun dc -> reniew_coord := true)
+	  and id_scroll =
+	    glArea#event#connect#scroll
 	      ~callback:(fun ev ->
-			   if !allow_inputs then
-			     begin
-			       mouse_mov_param ev;
-			       render_param ();
-			     end;
-			   false)
+			   scroll_mov_param ev;
+			   render_param ();false);
 	  in
+
 	    ignore (glArea#event#add [`ALL_EVENTS]);
 
 	  (if not !gui_mode then
@@ -413,4 +417,4 @@ let draw_map mode ?(gui=false) ?win ?box ?allow filename =
 	     end);
 
 	  (* Return ids to disconnect callbacks later *)
-	  [|[id_display;id_reshape];[id_keyboard;id_mouse]|]
+	  [|[id_display;id_reshape;id_mouse;id_scroll;id_reniew];[id_keyboard]|]
