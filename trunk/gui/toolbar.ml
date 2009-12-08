@@ -16,6 +16,8 @@ let create_toolbar ~packing ~buttons ?show () =
     ~height:80
     ?show
     ~packing () in
+    toolbar#drag#source_set
+    ~modi:[`SHIFT] [{Gtk.target = "text/uri-list"; flags=[]; info=0}];
 
   let add_tool_button = function
       Separator ->
