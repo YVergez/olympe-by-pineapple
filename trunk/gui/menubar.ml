@@ -2,6 +2,7 @@ let menubar = ref (GMenu.menu_bar ())
 
 (* Clear all values and loaded files *)
 let restartProgram () =
+  Printf.printf "bla\n%!";
   Skel.map_file :=  "";
   Skel.edged_file :=  "resources/tmp/edged.bmp";
   Skel.obj_file :=  "resources/tmp/map.obj";
@@ -79,7 +80,11 @@ let create () =
   let menu_help = GMenu.menu
     ~packing:menu_help_title#set_submenu () in
 
-    ignore (add_stock_item menu_file ~stock:`NEW  ~callback:restartProgram ());
+  let new_item =
+    add_stock_item menu_file ~stock:`NEW  ~callback:restartProgram ()
+  in
+    ignore (new_item#event#connect#button_press
+	      ~callback:Dialogs.showNewConfirmBox);
     add_separator menu_file ();
     let exit_item =
       add_stock_item menu_file ~stock:`QUIT ~callback:Skel.exitProgram ()

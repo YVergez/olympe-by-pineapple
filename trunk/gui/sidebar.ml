@@ -47,7 +47,8 @@ let create3dModel () =
     ~gui:true
     ~win:(Skel.getWindow ())
     ~box:(Mainview.get3DViewArea ())
-    ~allow:Skel.allow_inputs;
+    ~allow:Skel.allow_inputs
+    ~colors:!Skel.colors_alt;
   Statusbar.setInfo "Displaying 3D model." ~timeout:true;
   (Skel.getWindow ())#misc#set_sensitive true;
   Statebar.moveToState 2 ()

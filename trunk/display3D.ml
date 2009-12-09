@@ -174,8 +174,26 @@ let light () =
   Gl.enable `light0;
   GlLight.light ~num:0 (`ambient (1.0,1.0,1.0,1.0))
 
-let render area max_vect_array vect_array faces_array draw_mode xrot yrot
-    xpos ypos zpos () =
+let rec get_color_from_alt alt = function
+    [] -> (0., 0., 0.)
+  | (r,g,b,al)::t when alt -. 10. <= (float_of_int al) ->
+	((float_of_int r)/.255., (float_of_int g)/.255., (float_of_int b)/.255.)
+  | _::t -> get_color_from_alt alt t
+
+let record_colors vect_array faces_array col_alt colors =
+  for i = 0 to ((Array.length faces_array) - 1) do
+    let (a,b,c) = faces_array.(i)
+    and gcfa = get_color_from_alt in (*Sexy Caml*)
+    let ((x,y,z):Gl.point3) = (vect_array.(a-1))
+    and ((x2,y2,z2):Gl.point3) = (vect_array.(b-1))
+    and ((x3,y3,z3):Gl.point3) = (vect_array.(c-1)) in
+      colors.(i * 3)     <- gcfa z  col_alt;
+      colors.(i * 3 + 1) <- gcfa z2 col_alt;
+      colors.(i * 3 + 2) <- gcfa z3 col_alt;
+  done
+
+let render area max_vect_array vect_array faces_array draw_mode colors_array
+    xrot yrot xpos ypos zpos () =
   GlClear.color ~alpha:1.0 (1.0, 1.0, 1.0);
   GlClear.clear [`color;`depth];
   enable ();
@@ -190,19 +208,20 @@ let render area max_vect_array vect_array faces_array draw_mode xrot yrot
   GlMat.translate ~z:5.0 ();
   for i = 0 to ((Array.length !faces_array) - 1) do
     let (a,b,c) = !faces_array.(i) in
-      let ((x,y,z):Gl.point3) = (vect_array.(a-1))
-      and ((x2,y2,z2):Gl.point3) = (vect_array.(b-1))
-      and ((x3,y3,z3):Gl.point3) = (vect_array.(c-1)) in
-	GlDraw.begins draw_mode;
-(*	Printf.printf "%f %f %f" z z2 z3;*)
-	GlDraw.color ~alpha:1.0 (0.0,0.0,(-.z +. 10.) /. 60.);
-	GlDraw.vertex3 (y/.10.0,-.z/.10.0,x/.10.0);
-	(*GlDraw.color ~alpha:1.0 (0.0,0.0,(mod_float (z2/.(-50.0)) 1.0) +.0.4);*)
-	GlDraw.color ~alpha:1.0 (0.0,0.0,(-.z2 +. 10.) /. 60.);
-	GlDraw.vertex3 (y2/.10.0,-.z2/.10.0,x2/.10.0);
-	GlDraw.color ~alpha:1.0 (0.0,0.0,(-.z3 +. 10.) /. 60.);
-	GlDraw.vertex3 (y3/.10.0,-.z3/.10.0,x3/.10.0);
-	GlDraw.ends ();
+    let ((x,y,z):Gl.point3) = (vect_array.(a-1))
+    and ((x2,y2,z2):Gl.point3) = (vect_array.(b-1))
+    and ((x3,y3,z3):Gl.point3) = (vect_array.(c-1)) in
+      GlDraw.begins draw_mode;
+      (*	Printf.printf "%f %f %f" z z2 z3;*)
+      GlDraw.color ~alpha:1.0 colors_array.(i * 3);
+      GlDraw.vertex3 (y/.10.0,z/.10.0,x /. 10.0);
+      (*GlDraw.color ~alpha:1.0 (0.0,0.0,(mod_float (z2/.(-50.0)) 1.0) +.0.4);*)
+      GlDraw.color ~alpha:1.0 colors_array.(i * 3 + 1);
+      GlDraw.vertex3 (y2/.10.0,z2/.10.0,x2/.10.0);
+      GlDraw.color ~alpha:1.0 colors_array.(i * 3 + 2);
+      GlDraw.vertex3 (y3/.10.0,z3/.10.0,x3/.10.0);
+      (*Printf.printf "%f %f %f || %!" z z2 z3;*)
+      GlDraw.ends ();
   done;
   GlMat.pop ();
   area#swap_buffers ()
@@ -267,7 +286,7 @@ let scroll_movement xrot yrot xpos ypos zpos ev =
 	   and xrotrad = (!xrot /. 180.0 *. 3.141592654) in
 	     xpos := !xpos +. (sin yrotrad);
 	     zpos := !zpos -. (cos yrotrad);
-	     ypos := !ypos -. (sin xrotrad)
+	     ypos := !ypos -. (sin xrotrad);
        | `DOWN ->
 	   let yrotrad = (!yrot /. 180.0 *. 3.141592654)
 	   and xrotrad = (!xrot /. 180.0 *. 3.141592654) in
@@ -322,7 +341,7 @@ let rec refresh_points max_points points =
     done;
     !continue
 
-let draw_map mode ?(gui=false) ?win ?box ?allow filename =
+let draw_map mode ?(gui=false) ?win ?box ?allow ~colors filename =
   gui_mode := gui;
 
   (* If in GUI mode, we get the main window *)
@@ -340,11 +359,11 @@ let draw_map mode ?(gui=false) ?win ?box ?allow filename =
   and nb_faces = ref 0
   and file = filename
   and draw_mode = (determine_draw_mode mode)
-  and xrot = ref 0.0
-  and yrot = ref 0.0
-  and xpos = ref 0.0
-  and ypos = ref 0.0
-  and zpos = ref 10.0
+  and xrot = ref 51.3
+  and yrot = ref 92.7
+  and xpos = ref (-5.5)
+  and ypos = ref 21.9
+  and zpos = ref 30.9
   and lastx = ref 0.0
   and lasty = ref 0.0 in
     count_vertices_file file nb_vects;
@@ -357,12 +376,16 @@ let draw_map mode ?(gui=false) ?win ?box ?allow filename =
 	organise_faces !faces_array_ref !vect_array_ref uvar;
 	antialiasing uvar;
 
+	let colors_array = Array.make (Array.length !vect_array_ref) (1.,1.,1.) in
+
 	let t_points = init_points uvar in
+
+	  record_colors uvar !faces_array_ref colors colors_array;
 
 	let glArea = init ?box () in
 	let render_param =
 	  render glArea uvar t_points faces_array_ref draw_mode
-	    xrot yrot xpos ypos zpos
+	    colors_array xrot yrot xpos ypos zpos
 	and keyboard_param =
 	  keyboard xrot yrot xpos ypos zpos
 	and mouse_mov_param =
