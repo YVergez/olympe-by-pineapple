@@ -102,22 +102,7 @@ let new3DViewArea () =
   !main_3d_view#destroy ();
   main_3d_view := GlGtk.area
     [`RGBA;`DEPTH_SIZE 1;`DOUBLEBUFFER]
-    ~packing:Skel.mainview_vbox#add ();
-  !main_3d_view#drag#source_set
-    ~modi:[`BUTTON1]
-    ~actions:[`DEFAULT]
-    [{Gtk.target = "move"; flags=[]; info=42}];
-
-  !main_3d_view#drag#dest_set
-    ~flags:[`MOTION]
-    ~actions:[`DEFAULT]
-    [{Gtk.target = "move"; flags=[]; info=42}];
-
-  !main_3d_view#drag#source_set_icon
-    (GDraw.pixmap
-       ~mask:true
-       ~width:1
-       ~height:1 ())
+    ~packing:Skel.mainview_vbox#add ()
 
 let get3DViewArea () =
   !main_3d_view

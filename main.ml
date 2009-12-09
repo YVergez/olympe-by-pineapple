@@ -16,7 +16,7 @@ let ask_heights auto colors =
 	    begin
 	      Printf.printf "%i\n" i;
 	      flush stdout;
-	      (r,g,b,i)::(heights_rec (i - 10) t)
+	      (r,g,b,i)::(heights_rec (i + 10) t)
 	    end
 	  else
 	    begin
@@ -74,7 +74,7 @@ Usage : olympe [OPTION...] IMAGE_FILE\n" in
 	            Sampling.openbmp !img !obj_file cAndH !inter;
 		    print_endline "Display...\n";
 	            let _ =
-		      Display3D.draw_map "-f" !obj_file in
+		      Display3D.draw_map "-f" ~colors:cAndH !obj_file in
 		      clean_tmp ();
 	      end
 	  end
