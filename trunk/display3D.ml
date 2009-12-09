@@ -314,6 +314,22 @@ let init ?box () =
 	  [`RGBA;`DEPTH_SIZE 1;`DOUBLEBUFFER]
 	  ~packing:!window#add ()
   in
+
+    glArea#drag#source_set
+      ~modi:[`BUTTON1]
+      ~actions:[`DEFAULT]
+      [{Gtk.target = "move"; flags=[]; info=42}];
+    
+    glArea#drag#dest_set
+      ~flags:[`MOTION]
+      ~actions:[`DEFAULT]
+      [{Gtk.target = "move"; flags=[]; info=42}];
+    
+    glArea#drag#source_set_icon
+      (GDraw.pixmap
+	 ~mask:true
+	 ~width:1
+	 ~height:1 ());
     glArea
 
 let init_points max_points =
@@ -440,7 +456,7 @@ let draw_map mode ?(gui=false) ?win ?box ?allow ?d_mode ~colors filename =
 	  (if not !gui_mode then
 	     begin
 	       !window#show ();
-	       GMain.Main.main ()
+	       GMain.Main.main ();
 	     end);
 
 	  (* Return ids to disconnect callbacks later *)
