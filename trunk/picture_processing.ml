@@ -93,13 +93,14 @@ let incr_list list =
 dans un fichier texte "colors"*)
 
 let rec_color list filename =
+  let list = incr_list list in
   let out_channel = open_out filename in
   let rec add = function
     |[] -> ();
     |(r,g,b,h)::t ->
-       output_string out_channel ((string_of_int r) ^ " " ^
-				    (string_of_int g) ^ " " ^
-				    (string_of_int b) ^ " " ^
+       output_string out_channel ("(r,g,b):(" ^ (string_of_int r) ^ "," ^
+				    (string_of_int g) ^ "," ^
+				    (string_of_int b) ^ ") altitude:" ^
 				    (string_of_int h) ^ "\n");
 	add t;
   in add list;

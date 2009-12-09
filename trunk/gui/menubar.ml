@@ -2,7 +2,6 @@ let menubar = ref (GMenu.menu_bar ())
 
 (* Clear all values and loaded files *)
 let restartProgram () =
-  Printf.printf "bla\n%!";
   Skel.map_file :=  "";
   Skel.edged_file :=  "resources/tmp/edged.bmp";
   Skel.obj_file :=  "resources/tmp/map.obj";
@@ -20,6 +19,24 @@ let restartProgram () =
   !Statebar.statebar_button1#misc#set_sensitive false;
   !Statebar.statebar_button2#misc#set_sensitive false;
   !Statebar.statebar_button3#misc#set_sensitive false
+
+(* New project confirmation box *)
+let showNewConfirmBox ev =
+  let win = GWindow.message_dialog
+    ~message:("Are you sure you want to restart\nprogram with a new map ?\n\n" ^
+		"You will lose all unsaved changes.")
+    ~message_type:`WARNING
+    ~buttons:GWindow.Buttons.yes_no
+    ~parent:(Skel.getWindow ())
+    ~destroy_with_parent:true
+    ~title:"Are you sure ?"
+    ~modal:false
+    ~position:`CENTER_ON_PARENT
+    ~resizable:false ()
+  in
+    match win#run () with
+	`NO -> win#destroy ()
+      | _ -> win#destroy ();restartProgram ()
 
 
 (* Tools for creating menubar *)
@@ -80,12 +97,7 @@ let create () =
   let menu_help = GMenu.menu
     ~packing:menu_help_title#set_submenu () in
 
-  let new_item =
-    add_stock_item menu_file ~stock:`NEW  ~callback:restartProgram ()
-  in
-    ignore (new_item#event#connect#button_press
-	      ~callback:Dialogs.showNewConfirmBox);
-    add_separator menu_file ();
+    ignore (add_stock_item menu_file ~stock:`NEW  ~callback:showNewConfirmBox ());
     let exit_item =
       add_stock_item menu_file ~stock:`QUIT ~callback:Skel.exitProgram ()
     in

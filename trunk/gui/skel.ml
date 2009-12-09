@@ -13,6 +13,7 @@ and menubar = ref (GMenu.menu_bar ())
 and allow_inputs = ref false
 and display_ids = ref ([||]:(GtkSignal.id list) array)
 and use_edges = ref true
+and draw_mode = ref (`triangles:GlDraw.shape)
 
 let getMapFile () =
   !map_file
@@ -163,6 +164,9 @@ let setMenuSensitive n sens =
   (Array.of_list !menubar#all_children).(n)#misc#set_sensitive sens
 
 
+let createAltFile () =
+  Picture_processing.rec_color !colors_alt "resources/tmp/altitudes"
+
 (* --- SHOW A DIALOG WITCH ASK ALTITUDES TO USER --- *)
 let showDialogAltitudes () =
   let dialog = GWindow.dialog
@@ -233,7 +237,7 @@ let showDialogAltitudes () =
 		~packing:(block#pack ~expand:false) () in
 
 	      let spin = GEdit.spin_button
-		~adjustment:( GData.adjustment ~page_size:0.0 ())
+		~adjustment:( GData.adjustment ~page_size:0.0 ~lower:0. ~upper:300. ())
 		~digits:0
 		~update_policy:`IF_VALID
 		~value:(float_of_int (i * 10))
@@ -251,5 +255,6 @@ let showDialogAltitudes () =
 	      | (r,g,b,_)::t -> (r,g,b, user_alts.(i)#value_as_int)::(put_alt (i + 1) t)
 	    in
 	      colors_alt := put_alt 0 !colors_alt;
+	      createAltFile ();
 	      dialog#destroy ()
 	| _ -> dialog#destroy ())
