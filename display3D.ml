@@ -211,7 +211,7 @@ let render area max_vect_array vect_array faces_array draw_mode colors_array
     let ((x,y,z):Gl.point3) = (vect_array.(a-1))
     and ((x2,y2,z2):Gl.point3) = (vect_array.(b-1))
     and ((x3,y3,z3):Gl.point3) = (vect_array.(c-1)) in
-      GlDraw.begins draw_mode;
+      GlDraw.begins !draw_mode;
       (*	Printf.printf "%f %f %f" z z2 z3;*)
       GlDraw.color ~alpha:1.0 colors_array.(i * 3);
       GlDraw.vertex3 (y/.10.0,z/.10.0,x /. 10.0);
@@ -274,7 +274,7 @@ let mouse_movement lastx lasty xrot yrot x y =
       (let diffx = x -. !lastx
        and diffy = y -. !lasty in
 	 xrot := !xrot +. diffy /. 7.0;
-	 yrot := !yrot +. diffx /. 7.0;);
+	 yrot := !yrot -. diffx /. 7.0;);
     lastx := x;
     lasty := y
 
@@ -341,7 +341,7 @@ let rec refresh_points max_points points =
     done;
     !continue
 
-let draw_map mode ?(gui=false) ?win ?box ?allow ~colors filename =
+let draw_map mode ?(gui=false) ?win ?box ?allow ?d_mode ~colors filename =
   gui_mode := gui;
 
   (* If in GUI mode, we get the main window *)
@@ -355,10 +355,14 @@ let draw_map mode ?(gui=false) ?win ?box ?allow ~colors filename =
      | None -> ref true
   in
 
+  let draw_mode = match d_mode with
+      Some m -> m
+    | None -> ref (determine_draw_mode mode)
+  in
+
   let nb_vects = ref 0
   and nb_faces = ref 0
   and file = filename
-  and draw_mode = (determine_draw_mode mode)
   and xrot = ref 51.3
   and yrot = ref 92.7
   and xpos = ref (-5.5)

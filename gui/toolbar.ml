@@ -3,9 +3,38 @@ and toolbar2 = ref (GButton.toolbar ())
 and toolbar3 = ref (GButton.toolbar ())
 and allow_inputs = ref false
 
+(* Hide nth item in toolbar t *)
+let hideInToolbar t n =
+  let tb = match t with
+      1 -> !toolbar1
+    | 2 -> !toolbar2
+    | _ -> !toolbar3 in
+  (Array.of_list tb#children).(n)#misc#hide ()
+
+(* Hide nth item in toolbar t *)
+let showInToolbar t n =
+  let tb = match t with
+      1 -> !toolbar1
+    | 2 -> !toolbar2
+    | _ -> !toolbar3 in
+  (Array.of_list tb#children).(n)#misc#show ()
+
+(* Toogle draw_mode value (wireframe/plain) *)
+let toogleDrawMode () =
+  if !Skel.draw_mode = `triangles then
+    (hideInToolbar 3 2;
+     showInToolbar 3 3;
+     Skel.draw_mode := `line_loop)
+  else
+    (hideInToolbar 3 3;
+     showInToolbar 3 2;
+     Skel.draw_mode := `triangles);
+  ignore ((Mainview.get3DViewArea ())#event#send (GdkEvent.create `FOCUS_CHANGE))
+
 (* Define a simple variant type for easily create toolbars *)
 type tool_button =
     Button of string * string * string * (unit -> unit)
+  | ToggleButton of string * string * string * (unit -> unit)
   | Separator
 
 (* Create a complete toolbars (with buttons) *)
@@ -16,14 +45,18 @@ let create_toolbar ~packing ~buttons ?show () =
     ~height:80
     ?show
     ~packing () in
-    toolbar#drag#source_set
-    ~modi:[`SHIFT] [{Gtk.target = "text/uri-list"; flags=[]; info=0}];
 
   let add_tool_button = function
       Separator ->
 	toolbar#insert_space ();
     | Button(text,icon,tooltip,cb) ->
 	ignore (toolbar#insert_button
+	  ~text:text
+	  ~icon:(GMisc.image ~file:("resources/toolbar/" ^ icon)())#coerce
+	  ~tooltip:tooltip
+	  ~callback:cb());
+    | ToggleButton(text,icon,tooltip,cb) ->
+	ignore (toolbar#insert_toggle_button
 	  ~text:text
 	  ~icon:(GMisc.image ~file:("resources/toolbar/" ^ icon)())#coerce
 	  ~tooltip:tooltip
@@ -77,10 +110,19 @@ let create () =
 		       "Save .obj file",
 		       (Dialogs.showSaveFile Dialogs.OBJ));
 		Separator;
-		Button("Camera mode",
-		       "camera-web.svg",
+		ToggleButton("Activate keyboard",
+		       "input-keyboard.svg",
 		       "Take control of the camera",
 		       Skel.toogleAllowInputs);
+		Separator;
+		Button("Wireframe",
+		       "wireframe.png",
+		       "Display model in wireframe mode",
+		       toogleDrawMode);
+		Button("Plain",
+		       "plain.png",
+		       "Display model in plain faces mode",
+		       toogleDrawMode);
 		Separator;
 		Button("Help",
 		       "help.svg",
@@ -90,7 +132,8 @@ let create () =
   in
     toolbar1 := tb1;
     toolbar2 := tb2;
-    toolbar3 := tb3
+    toolbar3 := tb3;
+    hideInToolbar 3 3
 
 (* Used to get a pointer on one of the 3 toolbars. Useful for showing/hidding toolbars *)
 let get = function
