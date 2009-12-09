@@ -160,3 +160,21 @@ let showColorSelector () =
     match win#run () with
 	`OK -> win#destroy ()
       | _ -> win#destroy ()
+
+(* New project confirmation box *)
+let showNewConfirmBox ev =
+  let win = GWindow.message_dialog
+    ~message:("Are you sure you want to restart program with a new map ?" ^
+		"You will lose all unsaved changes.")
+    ~message_type:`WARNING
+    ~buttons:GWindow.Buttons.yes_no
+    ~parent:(Skel.getWindow ())
+    ~destroy_with_parent:true
+    ~title:"Are you sure ?"
+    ~modal:true
+    ~position:`CENTER_ON_PARENT
+    ~resizable:false ()
+  in
+    match win#run () with
+	`NO -> win#destroy ();true
+      | _ -> win#destroy ();false

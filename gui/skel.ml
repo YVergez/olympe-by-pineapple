@@ -248,7 +248,7 @@ let showDialogAltitudes () =
 	  `VALID ->
 	    let rec put_alt i = function
 		[] -> []
-	      | (r,g,b,_)::t -> (r,g,b,(-1) * user_alts.(i)#value_as_int)::(put_alt (i + 1) t)
+	      | (r,g,b,_)::t -> (r,g,b, user_alts.(i)#value_as_int)::(put_alt (i + 1) t)
 	    in
 	      colors_alt := put_alt 0 !colors_alt;
 	      dialog#destroy ()

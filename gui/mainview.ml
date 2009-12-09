@@ -111,7 +111,13 @@ let new3DViewArea () =
   !main_3d_view#drag#dest_set
     ~flags:[`MOTION]
     ~actions:[`DEFAULT]
-    [{Gtk.target = "move"; flags=[]; info=42}]
+    [{Gtk.target = "move"; flags=[]; info=42}];
+
+  !main_3d_view#drag#source_set_icon
+    (GDraw.pixmap
+       ~mask:true
+       ~width:1
+       ~height:1 ())
 
 let get3DViewArea () =
   !main_3d_view
