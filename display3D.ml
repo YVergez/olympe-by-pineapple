@@ -193,38 +193,40 @@ let record_colors vect_array faces_array col_alt colors =
   done
 
 let render area max_vect_array vect_array faces_array draw_mode colors_array
-    xrot yrot xpos ypos zpos () =
+    xrot yrot xpos ypos zpos center () =
   GlClear.color ~alpha:1.0 (1.0, 1.0, 1.0);
   GlClear.clear [`color;`depth];
   enable ();
   GlDraw.shade_model `smooth;
-  (*GlFunc.blend_func `src_alpha `one_minus_src_alpha;*)
   GlMat.load_identity ();
-  GlMat.translate ~z:(-10.0) ~y:(-.5.0) ();
-  GlMat.rotate ~angle:!xrot ~x:1.0 ();
-  GlMat.rotate ~angle:!yrot ~y:1.0 ();
-  GlMat.translate ~x:(-.(!xpos)) ~y:(-.(!ypos)) ~z:(-.(!zpos)) ();
-  GlMat.push ();
-  GlMat.translate ~z:5.0 ();
-  for i = 0 to ((Array.length !faces_array) - 1) do
-    let (a,b,c) = !faces_array.(i) in
-    let ((x,y,z):Gl.point3) = (vect_array.(a-1))
-    and ((x2,y2,z2):Gl.point3) = (vect_array.(b-1))
-    and ((x3,y3,z3):Gl.point3) = (vect_array.(c-1)) in
-      GlDraw.begins !draw_mode;
-      (*	Printf.printf "%f %f %f" z z2 z3;*)
-      GlDraw.color ~alpha:1.0 colors_array.(i * 3);
-      GlDraw.vertex3 (y/.10.0,z/.10.0,x /. 10.0);
-      (*GlDraw.color ~alpha:1.0 (0.0,0.0,(mod_float (z2/.(-50.0)) 1.0) +.0.4);*)
-      GlDraw.color ~alpha:1.0 colors_array.(i * 3 + 1);
-      GlDraw.vertex3 (y2/.10.0,z2/.10.0,x2/.10.0);
-      GlDraw.color ~alpha:1.0 colors_array.(i * 3 + 2);
-      GlDraw.vertex3 (y3/.10.0,z3/.10.0,x3/.10.0);
-      (*Printf.printf "%f %f %f || %!" z z2 z3;*)
-      GlDraw.ends ();
-  done;
-  GlMat.pop ();
-  area#swap_buffers ()
+<<<<<<< .mine
+  (*GlMat.translate ~z:(-10.0) ~y:(-.5.0) ();*)
+  (*GlMat.translate ~z:(-0.0) ~y:(-5.0) ();*)
+  (*GluMat.look_at (0.,5.,0.) center (0.,1.,0.);*)
+  let (cx,cy,cz) = center in
+    GlMat.translate ~x:(-.(!xpos)) ~y:(-.(!ypos)) ~z:(-.(!zpos)) ();
+    GlMat.rotate ~angle:!xrot ~x:1.0 ();
+    GlMat.rotate ~angle:!yrot ~y:1.0 ();
+    GlMat.push ();
+    GlMat.translate ~x:(-.cx/.10.) ~z:(-.cy/.10.) ();
+    (*GlMat.translate ~x:(cx-.(!xpos)) ~z:(cy-.(!ypos)) ();*)
+    for i = 0 to ((Array.length !faces_array) - 1) do
+      let (a,b,c) = !faces_array.(i) in
+      let ((x,y,z):Gl.point3) = (vect_array.(a-1))
+      and ((x2,y2,z2):Gl.point3) = (vect_array.(b-1))
+      and ((x3,y3,z3):Gl.point3) = (vect_array.(c-1)) in
+	GlDraw.begins draw_mode;
+	GlDraw.color ~alpha:1.0 colors_array.(i * 3);
+	GlDraw.vertex3 (y/.10.0,z/.10.0,x /. 10.0);
+	GlDraw.color ~alpha:1.0 colors_array.(i * 3 + 1);
+	GlDraw.vertex3 (y2/.10.0,z2/.10.0,x2/.10.0);
+	GlDraw.color ~alpha:1.0 colors_array.(i * 3 + 2);
+	GlDraw.vertex3 (y3/.10.0,z3/.10.0,x3/.10.0);
+	GlDraw.ends ();
+    done;
+  (*GlMat.translate ~x:((cx-.(!xpos))/.10.) ~z:((cy-.(!ypos))/.10.) ();*)
+    GlMat.pop ();
+    area#swap_buffers ()
 
 let reshape ~width ~height =
   GlDraw.viewport ~x:0 ~y:0 ~w:width ~h:height;
@@ -246,16 +248,18 @@ let keyboard xrot yrot xpos ypos zpos ev =
   in
     if key = 27 && not !gui_mode then
       GMain.Main.quit ();
+    (*Printf.printf "yrot=%f  xrot=%f\n" !yrot !xrot;
+    flush stdout;*)
     match char_key with
       | 'z' -> let yrotrad = (!yrot /. 180.0 *. 3.141592654)
 	       (*and xrotrad = (!xrot /. 180.0 *. 3.141592654)*) in
-	  xpos := !xpos +. (sin yrotrad);
-	  zpos := !zpos -. (cos yrotrad);
+	  xpos := !xpos +. (cos yrotrad);
+	  zpos := !zpos -. (sin yrotrad);
 	  ypos := !ypos (*-. (sin xrotrad)*)
       | 's' -> let yrotrad = (!yrot /. 180.0 *. 3.141592654)
 	       (*and xrotrad = (!xrot /. 180.0 *. 3.141592654)*) in
-	  xpos := !xpos -. (sin yrotrad);
-	  zpos := !zpos +. (cos yrotrad);
+	  xpos := !xpos -. (cos yrotrad);
+	  zpos := !zpos +. (sin yrotrad);
 	  ypos := !ypos (*+. (sin xrotrad)*)
       | 'd' -> let yrotrad = (!yrot /. 180.0 *. 3.141592654) in
 	  xpos := !xpos +. cos(yrotrad);
@@ -357,6 +361,30 @@ let rec refresh_points max_points points =
     done;
     !continue
 
+let calculate_center points =
+  let center = ref (0.,0.,0.)
+  and i = ref 0 in
+    while !i < Array.length points do
+      let (x,y,z) = points.(!i)
+      and (mx,my,mz) = !center in
+	center := (mx+.x,my+.y,mz+.z);
+	i := !i + 1;
+    done;
+    let (x,y,z) = !center in
+      (x/.float (Array.length points),y/.float (Array.length
+  points),z/.float (Array.length points))
+
+let calculate_max points =
+  let maximum = ref (0.,0.,0.)
+  and i = ref 0 in
+    while !i < Array.length points do
+      let (x,y,z) = points.(!i)
+      and (mx,my,mz) = !maximum in
+	maximum := (max x mx,max y my,0.);
+	i := !i + 1;
+    done;
+    !maximum
+
 let draw_map mode ?(gui=false) ?win ?box ?allow ?d_mode ~colors filename =
   gui_mode := gui;
 
@@ -379,11 +407,16 @@ let draw_map mode ?(gui=false) ?win ?box ?allow ?d_mode ~colors filename =
   let nb_vects = ref 0
   and nb_faces = ref 0
   and file = filename
-  and xrot = ref 51.3
+  (*and xrot = ref 51.3
   and yrot = ref 92.7
   and xpos = ref (-5.5)
   and ypos = ref 21.9
-  and zpos = ref 30.9
+  and zpos = ref 30.9*)
+  and xrot = ref 0.0
+  and yrot = ref 0.0
+  and xpos = ref 0.0
+  and ypos = ref 0.0
+  and zpos = ref 0.0
   and lastx = ref 0.0
   and lasty = ref 0.0 in
     count_vertices_file file nb_vects;
@@ -398,14 +431,14 @@ let draw_map mode ?(gui=false) ?win ?box ?allow ?d_mode ~colors filename =
 
 	let colors_array = Array.make (Array.length !vect_array_ref) (1.,1.,1.) in
 
-	let t_points = init_points uvar in
-
+	let t_points = init_points uvar
+	and center = calculate_center uvar in
 	  record_colors uvar !faces_array_ref colors colors_array;
 
 	let glArea = init ?box () in
 	let render_param =
 	  render glArea uvar t_points faces_array_ref draw_mode
-	    colors_array xrot yrot xpos ypos zpos
+	    colors_array xrot yrot xpos ypos zpos center
 	and keyboard_param =
 	  keyboard xrot yrot xpos ypos zpos
 	and mouse_mov_param =
