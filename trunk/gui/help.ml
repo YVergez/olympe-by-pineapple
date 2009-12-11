@@ -101,7 +101,6 @@ let create () =
     ~cursor_visible:false
     ~justification:`LEFT
     ~wrap_mode:`WORD
-    ~accepts_tab:true
     ~packing:(scroll_win#add) ()
   in
 
