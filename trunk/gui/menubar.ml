@@ -129,7 +129,7 @@ let create () =
 
       ignore (add_stock_item menu_help ~stock:`ABOUT
 	~callback:(Dialogs.showAbout) ());
-      ignore (add_stock_item menu_help ~stock:`HELP  ~callback:Dialogs.showHelp ());
+      ignore (add_stock_item menu_help ~stock:`HELP  ~callback:Help.show ());
       menu_view_title#misc#set_sensitive false;
 
       menubar := menu_bar;

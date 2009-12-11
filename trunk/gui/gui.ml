@@ -9,6 +9,7 @@ let init () =
   Mainview.init ();
   Statusbar.create ();
   Toolbar.initFileDnD ();
+  Help.create ();
 
   (* Show the window and enter program's main loop *)
   (Skel.getWindow ())#show ();

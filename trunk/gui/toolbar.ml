@@ -79,7 +79,7 @@ let create () =
 		Button("Help",
 		       "help.svg",
 		       "Get helped",
-		       Dialogs.showHelp)
+		       Help.show)
 	      ]) ()
   in
   let tb2 = create_toolbar
@@ -98,7 +98,7 @@ let create () =
 		Button("Help",
 		       "help.svg",
 		       "Get helped",
-		       Dialogs.showHelp)
+		       Help.show)
 		 ]) ()
   in
   let tb3 = create_toolbar
@@ -127,7 +127,7 @@ let create () =
 		Button("Help",
 		       "help.svg",
 		       "Get helped",
-		       Dialogs.showHelp)
+		       Help.show)
 		 ]) ()
   in
     toolbar1 := tb1;

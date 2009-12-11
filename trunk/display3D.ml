@@ -199,7 +199,6 @@ let render area max_vect_array vect_array faces_array draw_mode colors_array
   enable ();
   GlDraw.shade_model `smooth;
   GlMat.load_identity ();
-<<<<<<< .mine
   (*GlMat.translate ~z:(-10.0) ~y:(-.5.0) ();*)
   (*GlMat.translate ~z:(-0.0) ~y:(-5.0) ();*)
   (*GluMat.look_at (0.,5.,0.) center (0.,1.,0.);*)
@@ -215,7 +214,7 @@ let render area max_vect_array vect_array faces_array draw_mode colors_array
       let ((x,y,z):Gl.point3) = (vect_array.(a-1))
       and ((x2,y2,z2):Gl.point3) = (vect_array.(b-1))
       and ((x3,y3,z3):Gl.point3) = (vect_array.(c-1)) in
-	GlDraw.begins draw_mode;
+	GlDraw.begins !draw_mode;
 	GlDraw.color ~alpha:1.0 colors_array.(i * 3);
 	GlDraw.vertex3 (y/.10.0,z/.10.0,x /. 10.0);
 	GlDraw.color ~alpha:1.0 colors_array.(i * 3 + 1);

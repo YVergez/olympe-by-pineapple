@@ -6,7 +6,7 @@ EXEC=olympe
 PICTPROCSOURCES = picture_processing.ml
 SAMPLINGSOURCES = sampling.ml
 DISPLAYSOURCES  = display3D.ml
-GUISOURCES      = skel.ml mainview.ml statusbar.ml statebar.ml sidebar.ml dialogs.ml menubar.ml toolbar.ml gui.ml
+GUISOURCES      = skel.ml help.ml mainview.ml statusbar.ml statebar.ml sidebar.ml dialogs.ml menubar.ml toolbar.ml gui.ml
 
 SRC = $(PICTPROCSOURCES) $(SAMPLINGSOURCES) $(DISPLAYSOURCES) $(GUISOURCES:%=gui/%) main.ml
 
@@ -16,7 +16,7 @@ OBJMLI = $(wildcard *.mli) $(wildcard gui/*.mli)
 OBJINT = $(OBJMLI:.mli=.cmi)
 LIBS= unix bigarray sdl sdlloader str lablgtk lablgl lablgtkgl
 INCDIRS= +lablgtk2 +lablGL +sdl gui/
-OCAMLFLAGS= -warn-error A
+#OCAMLFLAGS= -warn-error A
 OPTIONS= $(INCDIRS:%=-I %)
 
 #Compilation rules
@@ -39,7 +39,8 @@ native-code: $(OBJINT) $(SRC:.ml=.cmx)
 	$(OBJNAT)
 
 # Common rules
-.SUFFIXES: .ml .mli .cmo .cmi .cmx
+.SUFFIXES: .ml .mli .cmo .cmi .cmx .mlia
+.PHONY: clean mrproper
 
 .ml.cmo:
 	$(OCAMLC) -c $(OCAMLFLAGS) $(OPTIONS) $<
@@ -57,7 +58,10 @@ clean:
 mrproper: clean
 	rm -f $(EXEC) *.tar.bz2 .depend
 
-.PHONY: clean mrproper
+
+#Create mli
+.ml.mli:
+	$(OCAMLC) -i $(OCAMLFLAGS) $(OPTIONS) $< > $@
 
 #Packing up
 package: mrproper

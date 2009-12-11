@@ -1,7 +1,3 @@
-(* --- SHOW HELP DIALOG --- *)
-let showHelp () =
-  ()
-
 (* --- SHOW ERROR --- *)
 let showErrMessage ?(title="Error") ~text () =
   ()
