@@ -50,7 +50,7 @@ let create () =
 	in
 	  let files_content = Array.of_list (List.map record_content !filenames) in
 
-	    Printf.printf "%s\n%!" files_content.(0);
+	    (* Return ... *)
 	    (clean_filenames,files_content)
   in
 
@@ -72,12 +72,7 @@ let create () =
   in
   let view_col = GTree.view_column
     ~renderer:(GTree.cell_renderer_text [],[("text",col)])
-    ~title:"Index" ()
-  in
-
-  let displaySelectedPage path vc =
-    let name = list_store#get ~row:(list_store#get_iter path) ~column:col in
-      Printf.printf "Selected:%s%!" name;
+    ~title:"Table of content" ()
   in
 
   (* Text buffer view *)
@@ -92,7 +87,8 @@ let create () =
 
   let text_buffer = GText.buffer
     ~tag_table:tag_table
-    ~text:"EMPTY\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol\nlol" ()
+    ~text:("\n\n<-- Please select a page in the left pane " ^
+    "by double-clicking on its name") ()
   in
 
   let text_view = GText.view
@@ -102,6 +98,18 @@ let create () =
     ~justification:`LEFT
     ~wrap_mode:`WORD
     ~packing:(scroll_win#add) ()
+  in
+
+  let displaySelectedPage path vc =
+    let name = list_store#get ~row:(list_store#get_iter path) ~column:col in
+    let i = ref 0 in
+    let rec get_list_pos x = function
+	[] -> -1
+      | h::t when h = x -> !i
+      | _::t -> i := !i + 1; get_list_pos x t
+    in
+    let pos = get_list_pos name filenames in
+      text_buffer#set_text files_content.(pos)
   in
 
     ignore (list_view#append_column view_col);
