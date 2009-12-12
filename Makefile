@@ -14,8 +14,8 @@ OBJBYTE= gtkInit.cmo $(SRC:.ml=.cmo)
 OBJNAT = gtkInit.cmx $(SRC:.ml=.cmx)
 OBJMLI = $(wildcard *.mli) $(wildcard gui/*.mli)
 OBJINT = $(OBJMLI:.mli=.cmi)
-LIBS= unix bigarray sdl sdlloader str lablgtk lablgl lablgtkgl
-INCDIRS= +lablgtk2 +lablGL +sdl gui/
+LIBS= unix bigarray sdl sdlloader str lablgtk lablgl lablgtkgl xml-light
+INCDIRS= +lablgtk2 +lablGL +sdl +xml-light gui/
 #OCAMLFLAGS= -warn-error A
 OPTIONS= $(INCDIRS:%=-I %)
 

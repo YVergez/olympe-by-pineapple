@@ -71,7 +71,7 @@ Usage : olympe [OPTION...] IMAGE_FILE\n" in
 		  print_endline "Asking colors...\n";
 		  let cAndH = ask_heights !auto colors in
 		    print_endline "Sampling...\n";
-	            Sampling.openbmp !img !obj_file cAndH !inter;
+	            Sampling.do_all !img out_file !obj_file !inter cAndH;
 		    print_endline "Display...\n";
 	            let _ =
 		      Display3D.draw_map "-f" ~colors:cAndH !obj_file in
