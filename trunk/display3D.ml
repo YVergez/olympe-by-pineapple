@@ -176,7 +176,7 @@ let light () =
 
 let rec get_color_from_alt alt = function
     [] -> (0., 0., 0.)
-  | (r,g,b,al)::t when alt -. 10. <= (float_of_int al) ->
+  | (r,g,b,al)::t when alt <= (float_of_int al) ->
 	((float_of_int r)/.255., (float_of_int g)/.255., (float_of_int b)/.255.)
   | _::t -> get_color_from_alt alt t
 
@@ -193,39 +193,42 @@ let record_colors vect_array faces_array col_alt colors =
   done
 
 let render area max_vect_array vect_array faces_array draw_mode colors_array
-    xrot yrot xpos ypos zpos center () =
+    xrot yrot xpos ypos zpos camera () =
+  GlMat.mode `modelview;
   GlClear.color ~alpha:1.0 (1.0, 1.0, 1.0);
   GlClear.clear [`color;`depth];
   enable ();
   GlDraw.shade_model `smooth;
   GlMat.load_identity ();
-  (*GlMat.translate ~z:(-10.0) ~y:(-.5.0) ();*)
-  (*GlMat.translate ~z:(-0.0) ~y:(-5.0) ();*)
-  (*GluMat.look_at (0.,5.,0.) center (0.,1.,0.);*)
-  let (cx,cy,cz) = center in
-    GlMat.translate ~x:(-.(!xpos)) ~y:(-.(!ypos)) ~z:(-.(!zpos)) ();
-    GlMat.rotate ~angle:!xrot ~x:1.0 ();
-    GlMat.rotate ~angle:!yrot ~y:1.0 ();
-    GlMat.push ();
-    GlMat.translate ~x:(-.cx/.10.) ~z:(-.cy/.10.) ();
-    (*GlMat.translate ~x:(cx-.(!xpos)) ~z:(cy-.(!ypos)) ();*)
-    for i = 0 to ((Array.length !faces_array) - 1) do
-      let (a,b,c) = !faces_array.(i) in
-      let ((x,y,z):Gl.point3) = (vect_array.(a-1))
-      and ((x2,y2,z2):Gl.point3) = (vect_array.(b-1))
-      and ((x3,y3,z3):Gl.point3) = (vect_array.(c-1)) in
-	GlDraw.begins !draw_mode;
-	GlDraw.color ~alpha:1.0 colors_array.(i * 3);
-	GlDraw.vertex3 (y/.10.0,z/.10.0,x /. 10.0);
-	GlDraw.color ~alpha:1.0 colors_array.(i * 3 + 1);
-	GlDraw.vertex3 (y2/.10.0,z2/.10.0,x2/.10.0);
-	GlDraw.color ~alpha:1.0 colors_array.(i * 3 + 2);
-	GlDraw.vertex3 (y3/.10.0,z3/.10.0,x3/.10.0);
-	GlDraw.ends ();
-    done;
-  (*GlMat.translate ~x:((cx-.(!xpos))/.10.) ~z:((cy-.(!ypos))/.10.) ();*)
-    GlMat.pop ();
-    area#swap_buffers ()
+  if not (!camera) then
+    begin
+      GlMat.rotate ~angle:!xrot ~x:1.0 ();
+      GlMat.rotate ~angle:!yrot ~y:1.0 ();
+    end;
+  GlMat.translate ~x:(-.(!xpos)) ~y:(-.(!ypos)-.10.) ~z:(-.(!zpos)) ();
+  GlMat.push ();
+  if !camera then
+    begin
+      GlMat.rotate ~angle:!xrot ~x:1.0 ();
+      GlMat.rotate ~angle:!yrot ~y:1.0 ();
+    end;
+  for i = 0 to ((Array.length !faces_array) - 1) do
+    let (a,b,c) = !faces_array.(i) in
+    let ((x,y,z):Gl.point3) = (vect_array.(a-1))
+    and ((x2,y2,z2):Gl.point3) = (vect_array.(b-1))
+    and ((x3,y3,z3):Gl.point3) = (vect_array.(c-1)) in
+      GlDraw.begins !draw_mode;
+      GlDraw.color ~alpha:1.0 colors_array.(i * 3);
+      GlDraw.vertex3 (y/.10.0,z/.10.0,x /. 10.0);
+      GlDraw.color ~alpha:1.0 colors_array.(i * 3 + 1);
+      GlDraw.vertex3 (y2/.10.0,z2/.10.0,x2/.10.0);
+      GlDraw.color ~alpha:1.0 colors_array.(i * 3 + 2);
+      GlDraw.vertex3 (y3/.10.0,z3/.10.0,x3/.10.0);
+      GlDraw.ends ();
+  done;
+  GlMat.pop ();
+  GluMat.look_at ~eye:(0.,10.,0.) ~center:(0.,0.,0.) ~up:(0.,1.,0.);
+  area#swap_buffers ()
 
 let reshape ~width ~height =
   GlDraw.viewport ~x:0 ~y:0 ~w:width ~h:height;
@@ -239,7 +242,7 @@ let determine_draw_mode = function
   | "-f" -> (`triangles:GlDraw.shape)
   | _ -> invalid_arg "unknown option"
 
-let keyboard xrot yrot xpos ypos zpos ev =
+let keyboard xrot yrot xpos ypos zpos camera ev =
   let key = GdkEvent.Key.keyval ev in
   let char_key =
     try char_of_int key
@@ -247,26 +250,36 @@ let keyboard xrot yrot xpos ypos zpos ev =
   in
     if key = 27 && not !gui_mode then
       GMain.Main.quit ();
-    (*Printf.printf "yrot=%f  xrot=%f\n" !yrot !xrot;
-    flush stdout;*)
-    match char_key with
-      | 'z' -> let yrotrad = (!yrot /. 180.0 *. 3.141592654)
-	       (*and xrotrad = (!xrot /. 180.0 *. 3.141592654)*) in
-	  xpos := !xpos +. (cos yrotrad);
-	  zpos := !zpos -. (sin yrotrad);
-	  ypos := !ypos (*-. (sin xrotrad)*)
-      | 's' -> let yrotrad = (!yrot /. 180.0 *. 3.141592654)
-	       (*and xrotrad = (!xrot /. 180.0 *. 3.141592654)*) in
-	  xpos := !xpos -. (cos yrotrad);
-	  zpos := !zpos +. (sin yrotrad);
-	  ypos := !ypos (*+. (sin xrotrad)*)
-      | 'd' -> let yrotrad = (!yrot /. 180.0 *. 3.141592654) in
-	  xpos := !xpos +. cos(yrotrad);
-	  zpos := !zpos +. sin(yrotrad);
-      | 'q' -> let yrotrad = (!yrot /. 180.0 *. 3.141592654) in
-	  xpos := !xpos -. cos(yrotrad);
-	  zpos := !zpos -. sin(yrotrad);
-      | _ -> ()
+    if !camera then
+      match char_key with
+	| 'z' ->let xrotrad = (!xrot /. 180. *.3.141592654) in
+	    zpos := !zpos -. (cos xrotrad);
+	    ypos := !ypos +. (sin xrotrad);
+	| 's' -> let xrotrad = (!xrot /. 180. *.3.141592654) in
+	    zpos := !zpos +. (cos xrotrad);
+	    ypos := !ypos -. (sin xrotrad);
+	| 'd' -> xpos := !xpos +. 1.;
+	| 'q' -> xpos := !xpos -. 1.;
+	| _ -> ()
+    else
+      match char_key with
+	| 'z' -> let yrotrad = (!yrot /. 180. *. 3.141592654)
+		 and xrotrad = (!xrot /. 180. *. 3.141592654) in
+	    xpos := !xpos +. (sin yrotrad);
+	    zpos := !zpos -. (cos yrotrad);
+	    ypos := !ypos -. (sin xrotrad);
+	| 's' -> let yrotrad = (!yrot /. 180. *. 3.141592654)
+		 and xrotrad = (!xrot /. 180. *. 3.141592654) in
+	    xpos := !xpos -. (sin yrotrad);
+	    zpos := !zpos +. (cos yrotrad);
+	    ypos := !ypos +. (sin xrotrad);
+	| 'd' -> let yrotrad = (!yrot /. 180. *. 3.141592654) in
+	    xpos := !xpos +.(cos yrotrad);
+	    zpos := !zpos +.(sin yrotrad);
+	| 'q' -> let yrotrad = (!yrot /. 180. *. 3.141592654) in
+	    xpos := !xpos -.(cos yrotrad);
+	    zpos := !zpos -.(sin yrotrad);
+	| _ -> ()
 
 let mouse_movement lastx lasty xrot yrot x y =
   let x = (float_of_int x)
@@ -281,22 +294,28 @@ let mouse_movement lastx lasty xrot yrot x y =
     lastx := x;
     lasty := y
 
-let scroll_movement xrot yrot xpos ypos zpos ev =
+let scroll_movement xrot yrot xpos ypos zpos camera ev =
   let dir = GdkEvent.Scroll.direction ev in
+    if !camera then
     (match dir with
-	 `UP ->
-	   let yrotrad = (!yrot /. 180.0 *. 3.141592654)
-	   and xrotrad = (!xrot /. 180.0 *. 3.141592654) in
-	     xpos := !xpos +. (sin yrotrad);
-	     zpos := !zpos -. (cos yrotrad);
-	     ypos := !ypos -. (sin xrotrad);
-       | `DOWN ->
-	   let yrotrad = (!yrot /. 180.0 *. 3.141592654)
-	   and xrotrad = (!xrot /. 180.0 *. 3.141592654) in
-	     xpos := !xpos -. (sin yrotrad);
-	     zpos := !zpos +. (cos yrotrad);
-	     ypos := !ypos +. (sin xrotrad)
+	 `UP -> zpos := !zpos -. 1.;
+       | `DOWN -> zpos := !zpos +. 1.;
        | _ -> ())
+    else
+      (match dir with
+	   `UP ->
+	     let yrotrad = (!yrot /. 180.0 *. 3.141592654)
+	     and xrotrad = (!xrot /. 180.0 *. 3.141592654) in
+	       xpos := !xpos +. (sin yrotrad);
+	       zpos := !zpos -. (cos yrotrad);
+	       ypos := !ypos -. (sin xrotrad);
+	 | `DOWN ->
+	     let yrotrad = (!yrot /. 180.0 *. 3.141592654)
+	     and xrotrad = (!xrot /. 180.0 *. 3.141592654) in
+	       xpos := !xpos -. (sin yrotrad);
+	       zpos := !zpos +. (cos yrotrad);
+	       ypos := !ypos +. (sin xrotrad)
+	 | _ -> ())
 
 let init ?box () =
   if not !gui_mode then
@@ -322,12 +341,10 @@ let init ?box () =
       ~modi:[`BUTTON1]
       ~actions:[`DEFAULT]
       [{Gtk.target = "move"; flags=[]; info=42}];
-    
     glArea#drag#dest_set
       ~flags:[`MOTION]
       ~actions:[`DEFAULT]
       [{Gtk.target = "move"; flags=[]; info=42}];
-    
     glArea#drag#source_set_icon
       (GDraw.pixmap
 	 ~mask:true
@@ -384,6 +401,16 @@ let calculate_max points =
     done;
     !maximum
 
+let recenter points ncenter ocenter =
+  let i = ref 0
+  and (cx,cy,cz) = ncenter
+  and (ox,oy,oz) = ocenter in
+    while !i < Array.length points do
+      let (x,y,z) = points.(!i) in
+	points.(!i) <- (x-.ox+.cx,y-.oy+.cy,z);
+	i := !i + 1;
+    done
+
 let draw_map mode ?(gui=false) ?win ?box ?allow ?d_mode ~colors filename =
   gui_mode := gui;
 
@@ -417,7 +444,8 @@ let draw_map mode ?(gui=false) ?win ?box ?allow ?d_mode ~colors filename =
   and ypos = ref 0.0
   and zpos = ref 0.0
   and lastx = ref 0.0
-  and lasty = ref 0.0 in
+  and lasty = ref 0.0
+  and camera = ref false in
     count_vertices_file file nb_vects;
     count_faces_file file nb_faces;
     let vect_array_ref = ref (Array.make !nb_vects ((0.,0.,0.):Gl.point3))
@@ -426,24 +454,26 @@ let draw_map mode ?(gui=false) ?win ?box ?allow ?d_mode ~colors filename =
       extract_faces file faces_array_ref;
       let uvar = make_unique_points vect_array_ref in
 	organise_faces !faces_array_ref !vect_array_ref uvar;
-	antialiasing uvar;
 
 	let colors_array = Array.make (Array.length !vect_array_ref) (1.,1.,1.) in
+	record_colors uvar !faces_array_ref colors colors_array;
 
-	let t_points = init_points uvar
-	and center = calculate_center uvar in
-	  record_colors uvar !faces_array_ref colors colors_array;
+	antialiasing uvar;
+
+	let center = calculate_center uvar in
+	  recenter uvar (0.,0.,0.) center;
+	  let t_points = init_points uvar in
 
 	let glArea = init ?box () in
 	let render_param =
 	  render glArea uvar t_points faces_array_ref draw_mode
-	    colors_array xrot yrot xpos ypos zpos center
+	    colors_array xrot yrot xpos ypos zpos camera
 	and keyboard_param =
-	  keyboard xrot yrot xpos ypos zpos
+	  keyboard xrot yrot xpos ypos zpos camera
 	and mouse_mov_param =
 	  mouse_movement lastx lasty xrot yrot
 	and scroll_mov_param =
-	  scroll_movement xrot yrot xpos ypos zpos
+	  scroll_movement xrot yrot xpos ypos zpos camera
 	in
 
 	  ignore (Glib.Timeout.add ~ms:20
