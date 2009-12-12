@@ -40,15 +40,45 @@ let create () =
 
 	(* Getting content *)
 	let record_content filename =
-	  let chan = open_in ("resources/help/" ^ filename) in
-	  let rec file2str str =
-	    try
-	      str ^ (file2str (input_line chan))
-	    with End_of_file -> str
+	  let buffer = GText.buffer
+	    ~tag_table:(GText.tag_table ())
+	    ~text:"" ()
 	  in
-	    file2str ""
+	  ignore (buffer#create_tag ~name:"html" []);
+	  ignore (buffer#create_tag ~name:"p" []);
+	  ignore (buffer#create_tag ~name:"title"
+		    [`WEIGHT(`BOLD);`SIZE(23);
+		     `FOREGROUND_GDK(Gdk.Color.alloc
+				       ~colormap:(Gdk.Color.get_system_colormap ())
+				       (`RGB(42,43,21)))]);
+	  ignore (buffer#create_tag ~name:"strong"
+		    [`WEIGHT(`BOLD)]);
+	  ignore (buffer#create_tag ~name:"em"
+		    [`STYLE(`ITALIC)]);
+
+	    (* Lexing file *)
+	    let xml = Xml.parse_file ("resources/help/" ^ filename) in
+	    let modify_buffer_by_tag = function
+		"title" -> buffer#insert "\n\n"
+	      | "p" -> buffer#insert "\n"
+	      | _ -> ()
+	    in
+	    let rec xml2buffer = function
+		Xml.Element(name,_,children) ->
+		  let start =  buffer#create_mark (buffer#end_iter) in
+		  let stop  =  buffer#create_mark ~left_gravity:false (buffer#end_iter) in
+		    List.iter xml2buffer children;
+		    modify_buffer_by_tag name;
+		    buffer#apply_tag_by_name name
+		      ~start:(buffer#get_iter_at_mark (`MARK(start)))
+		      ~stop:(buffer#get_iter_at_mark (`MARK(stop)));
+	      | Xml.PCData(data) ->
+		  buffer#insert data;
+	    in
+	      xml2buffer xml;
+	      buffer
 	in
-	  let files_content = Array.of_list (List.map record_content !filenames) in
+	let files_content = Array.of_list (List.map record_content !filenames) in
 
 	    (* Return ... *)
 	    (clean_filenames,files_content)
@@ -83,10 +113,8 @@ let create () =
     ~packing:(mainHbox#pack ~expand:true) ()
   in
 
-  let tag_table = GText.tag_table () in
-
   let text_buffer = GText.buffer
-    ~tag_table:tag_table
+    ~tag_table:(GText.tag_table ())
     ~text:("\n\n<-- Please select a page in the left pane " ^
     "by double-clicking on its name") ()
   in
@@ -109,7 +137,7 @@ let create () =
       | _::t -> i := !i + 1; get_list_pos x t
     in
     let pos = get_list_pos name filenames in
-      text_buffer#set_text files_content.(pos)
+      text_view#set_buffer files_content.(pos)
   in
 
     ignore (list_view#append_column view_col);
@@ -117,7 +145,6 @@ let create () =
 
     text_view#set_left_margin 10;
     text_view#set_right_margin 10;
-    ignore (text_buffer#create_tag ~name:"bold" [`WEIGHT(`BOLD)]);
 
     ignore (!helpWin#event#connect#delete ~callback:(fun ev -> !helpWin#misc#hide ();true));
     ()

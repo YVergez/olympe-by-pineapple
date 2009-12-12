@@ -456,11 +456,11 @@ let draw_map mode ?(gui=false) ?win ?box ?allow ?d_mode ~colors filename =
 	organise_faces !faces_array_ref !vect_array_ref uvar;
 
 	let colors_array = Array.make (Array.length !vect_array_ref) (1.,1.,1.) in
-	record_colors uvar !faces_array_ref colors colors_array;
+	  record_colors uvar !faces_array_ref colors colors_array;
 
-	antialiasing uvar;
+	  antialiasing uvar;
 
-	let center = calculate_center uvar in
+	  let center = calculate_center uvar in
 	  recenter uvar (0.,0.,0.) center;
 	  let t_points = init_points uvar in
 

@@ -41,7 +41,8 @@ let create3dModel () =
   ignore (Glib.Main.iteration false);
   (Skel.getWindow ())#misc#set_sensitive false;
   ignore (Glib.Main.iteration false);
-  Sampling.openbmp !Skel.map_file !Skel.obj_file !Skel.colors_alt !Skel.step;
+  Sampling.do_all !Skel.map_file !Skel.edged_file !Skel.obj_file
+    !Skel.step !Skel.colors_alt;
   Skel.display_ids := Display3D.draw_map "-f"
     !Skel.obj_file
     ~gui:true
