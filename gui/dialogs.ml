@@ -48,7 +48,8 @@ let verifyFile ?(callback=Skel.void) filenames =
 	    String.sub filename (String.rindex filename '.') 4
 	  with Not_found -> "DIR"
 	in
-	  if ext = ".bmp" then
+	  if ext = ".bmp" || ext = ".jpg" || ext = ".jpeg"
+	    || ext = ".png" || ext = ".gif"  then
 	    begin
 	      Skel.setMapFile filename;
 	      Mainview.setMainMapImg filename;
@@ -64,8 +65,8 @@ let verifyFile ?(callback=Skel.void) filenames =
 
 (* Create filter on .bmp *)
 let img_filter = GFile.filter
-  ~name:"BMP files"
-  ~patterns:["*.bmp"] ()
+  ~name:"Image file"
+  ~patterns:["*.bmp";"*.jpeg";"*.jpg";"*.png";"*.gif"] ()
 
 (* Create filter on .obj *)
 let obj_filter = GFile.filter
