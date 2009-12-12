@@ -316,7 +316,7 @@ let openbmp filename t_ref =
        while (!i <= 28) do
 	 if (!i < 2) then
 	   (*Recuperation de BM premier octet d'un BMP*)
-	   let s = transBM file in
+	   let _ = transBM file in
 	     i := !i + 1;
 	 else
 	   (*recuperation du nb de plan et nb bit par pixel*)
