@@ -45,12 +45,18 @@ let create () =
 	    ~text:"" ()
 	  in
 	  ignore (buffer#create_tag ~name:"html" []);
-	  ignore (buffer#create_tag ~name:"p" []);
+	  ignore (buffer#create_tag ~name:"p" [`INDENT(20)]);
 	  ignore (buffer#create_tag ~name:"title"
-		    [`WEIGHT(`BOLD);`SIZE(23);
+		    [`WEIGHT(`BOLD);`SIZE_POINTS(23.);
 		     `FOREGROUND_GDK(Gdk.Color.alloc
 				       ~colormap:(Gdk.Color.get_system_colormap ())
-				       (`RGB(42,43,21)))]);
+				       (`NAME("#2b8fad")))]);
+	  ignore (buffer#create_tag ~name:"h1"
+		    [`WEIGHT(`BOLD);`SIZE_POINTS(16.)]);
+	  ignore (buffer#create_tag ~name:"h2"
+		    [`WEIGHT(`BOLD);`SIZE_POINTS(14.)]);
+	  ignore (buffer#create_tag ~name:"h3"
+		    [`WEIGHT(`BOLD);`SIZE_POINTS(12.)]);
 	  ignore (buffer#create_tag ~name:"strong"
 		    [`WEIGHT(`BOLD)]);
 	  ignore (buffer#create_tag ~name:"em"
@@ -59,8 +65,8 @@ let create () =
 	    (* Lexing file *)
 	    let xml = Xml.parse_file ("resources/help/" ^ filename) in
 	    let modify_buffer_by_tag = function
-		"title" -> buffer#insert "\n\n"
-	      | "p" -> buffer#insert "\n"
+		"p" -> buffer#insert "\n\n"
+	      | "title" | "h1" | "h2" | "h3" -> buffer#insert "\n"
 	      | _ -> ()
 	    in
 	    let rec xml2buffer = function
