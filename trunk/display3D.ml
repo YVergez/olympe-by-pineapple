@@ -221,19 +221,19 @@ let render area max_vect_array vect_array faces_array draw_mode colors_array
 	GlDraw.color ~alpha:1.0 colors_array.(i * 3)
       else
 	GlDraw.color ~alpha:1.0 (0.,0.,0.);
-      GlDraw.vertex3 (y/.10.0,z/.10.0,x /. 10.0);
+      GlDraw.vertex3 (x/.10.0,z/.10.0,y /. 10.0);
       if (color_test.(!active_color) = colors_array.(i * 3)) || not
 	(!color_selection) then
 	GlDraw.color ~alpha:1.0 colors_array.(i * 3 + 1)
       else
 	GlDraw.color ~alpha:1.0 (0.,0.,0.);
-      GlDraw.vertex3 (y2/.10.0,z2/.10.0,x2/.10.0);
+      GlDraw.vertex3 (x2/.10.0,z2/.10.0,y2/.10.0);
       if (color_test.(!active_color) = colors_array.(i * 3)) || not
 	(!color_selection) then
 	GlDraw.color ~alpha:1.0 colors_array.(i * 3 + 2)
       else
 	GlDraw.color ~alpha:1.0 (0.,0.,0.);
-      GlDraw.vertex3 (y3/.10.0,z3/.10.0,x3/.10.0);
+      GlDraw.vertex3 (x3/.10.0,z3/.10.0,y3/.10.0);
       GlDraw.ends ();
   done;
   GlMat.pop ();
@@ -259,6 +259,8 @@ let keyboard xrot yrot xpos ypos zpos camera active_color nbcol
     try char_of_int key
     with Invalid_argument "char_of_int" -> '>' (* if the key is not a letter (arrow, etc...)*)
   in
+    Printf.printf "xrot=%f\nyrot=%f\nxpos=%f\nypos=%f\nzpos=%f\ncam_rot=%b\n%!"
+      !xrot !yrot !xpos !ypos !zpos !camera;
     if key = 27 && not !gui_mode then
       GMain.Main.quit ();
     if !camera then
@@ -271,9 +273,15 @@ let keyboard xrot yrot xpos ypos zpos camera active_color nbcol
 	    ypos := !ypos -. (sin xrotrad);
 	| 'd' -> xpos := !xpos +. 1.;
 	| 'q' -> xpos := !xpos -. 1.;
-	| 'o' -> active_color := (!active_color + 1) mod nbcol;
-	| 'l' -> active_color := (!active_color - 1) mod nbcol;
+	| 'o' -> active_color := (!active_color + 1 + nbcol) mod nbcol;
+	| 'l' -> active_color := (!active_color - 1 + nbcol) mod nbcol;
 	| 'p' -> color_selection := not !color_selection;
+	| 'c' -> camera := not !camera;
+	    xrot := 40.;
+	    yrot := 94.;
+	    xpos := -.35.;
+	    ypos := 29.;
+	    zpos := -.3.
 	| _ -> ()
     else
       match char_key with
@@ -293,10 +301,17 @@ let keyboard xrot yrot xpos ypos zpos camera active_color nbcol
 	| 'q' -> let yrotrad = (!yrot /. 180. *. 3.141592654) in
 	    xpos := !xpos -.(cos yrotrad);
 	    zpos := !zpos -.(sin yrotrad);
-	| 'o' -> active_color := (!active_color + 1) mod nbcol;
-	| 'l' -> active_color := (!active_color - 1) mod nbcol;
+	| 'o' -> active_color := (!active_color + 1 + nbcol) mod nbcol;
+	| 'l' -> active_color := (!active_color - 1 + nbcol) mod nbcol;
 	| 'p' -> color_selection := not !color_selection;
+	| 'c' -> camera := not !camera;
+	    xrot := 40.7;
+	    yrot := 94.14;
+	    xpos := 0.;
+	    ypos := 0.;
+	    zpos := 45.
 	| _ -> ()
+
 let mouse_movement lastx lasty xrot yrot x y =
   let x = (float_of_int x)
   and y = (float_of_int y) in
@@ -457,16 +472,16 @@ let draw_map mode ?(gui=false) ?win ?box ?allow ?d_mode ~colors filename =
   let nb_vects = ref 0
   and nb_faces = ref 0
   and file = filename
-  and xrot = ref 15.7
-  and yrot = ref 94.14
+  and xrot = ref 40.
+  and yrot = ref 94.
   and xpos = ref 0.
-  and ypos = ref 13.68
-  and zpos = ref 45.7
+  and ypos = ref 0.
+  and zpos = ref 45.
   and lastx = ref 0.0
   and lasty = ref 0.0
   and active_color = ref 0
   and color_selection = ref false
-  and camera = ref true in
+  and camera_rotating = ref true in
     count_vertices_file file nb_vects;
     count_faces_file file nb_faces;
     let vect_array_ref = ref (Array.make !nb_vects ((0.,0.,0.):Gl.point3))
@@ -489,15 +504,15 @@ let draw_map mode ?(gui=false) ?win ?box ?allow ?d_mode ~colors filename =
 	let glArea = init ?box () in
 	let render_param =
 	  render glArea uvar t_points faces_array_ref draw_mode
-	    colors_array xrot yrot xpos ypos zpos camera active_color
+	    colors_array xrot yrot xpos ypos zpos camera_rotating active_color
 	    color_test color_selection
 	and keyboard_param =
-	  keyboard xrot yrot xpos ypos zpos camera active_color
+	  keyboard xrot yrot xpos ypos zpos camera_rotating active_color
 	    (Array.length color_test) color_selection
 	and mouse_mov_param =
 	  mouse_movement lastx lasty xrot yrot
 	and scroll_mov_param =
-	  scroll_movement xrot yrot xpos ypos zpos camera
+	  scroll_movement xrot yrot xpos ypos zpos camera_rotating
 	in
 
 	  ignore (Glib.Timeout.add ~ms:20
