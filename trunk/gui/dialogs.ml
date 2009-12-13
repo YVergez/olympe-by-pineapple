@@ -65,8 +65,8 @@ let verifyFile ?(callback=Skel.void) filenames =
 
 (* Create filter on .bmp *)
 let img_filter = GFile.filter
-  ~name:"Image file"
-  ~patterns:["*.bmp";"*.jpeg";"*.jpg";"*.png";"*.gif"] ()
+  ~name:"BMP file"
+  ~patterns:["*.bmp"] ()
 
 (* Create filter on .obj *)
 let obj_filter = GFile.filter

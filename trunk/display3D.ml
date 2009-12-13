@@ -365,8 +365,12 @@ let keyboard xrot yrot xpos ypos zpos camera active_color nbcol
 	| 'p' -> color_selection := not !color_selection;
 	| _ -> ()
 
-let mouse_movement lastx lasty xrot yrot x y =
-  let x = (float_of_int x)
+let mouse_movement lastx lasty xrot yrot camera x y =
+  let x =
+    if !camera then
+      (float_of_int (-x))
+    else
+      (float_of_int x)
   and y = (float_of_int y) in
     if !reniew_coord then
       reniew_coord := false
@@ -568,7 +572,7 @@ let draw_map mode ?(gui=false) ?win ?box ?allow ?d_mode ~colors
 	  keyboard xrot yrot xpos ypos zpos camera_rotating active_color
 	    (Array.length color_test) color_selection
 	and mouse_mov_param =
-	  mouse_movement lastx lasty xrot yrot
+	  mouse_movement lastx lasty xrot yrot camera_rotating
 	and scroll_mov_param =
 	  scroll_movement xrot yrot xpos ypos zpos camera_rotating
 	in

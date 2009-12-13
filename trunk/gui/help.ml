@@ -45,7 +45,8 @@ let create () =
 	    ~text:"" ()
 	  in
 	  ignore (buffer#create_tag ~name:"html" []);
-	  ignore (buffer#create_tag ~name:"p" [`INDENT(20)]);
+	  ignore (buffer#create_tag ~name:"br" []);
+	  ignore (buffer#create_tag ~name:"p" []);
 	  ignore (buffer#create_tag ~name:"title"
 		    [`WEIGHT(`BOLD);`SIZE_POINTS(23.);
 		     `FOREGROUND_GDK(Gdk.Color.alloc
@@ -66,7 +67,7 @@ let create () =
 	    let xml = Xml.parse_file ("resources/help/" ^ filename) in
 	    let modify_buffer_by_tag = function
 		"p" -> buffer#insert "\n\n"
-	      | "title" | "h1" | "h2" | "h3" -> buffer#insert "\n"
+	      | "title" | "h1" | "h2" | "h3" | "br" -> buffer#insert "\n"
 	      | _ -> ()
 	    in
 	    let rec xml2buffer = function
@@ -129,7 +130,7 @@ let create () =
     ~buffer:text_buffer
     ~editable:false
     ~cursor_visible:false
-    ~justification:`LEFT
+    ~justification:`FILL
     ~wrap_mode:`WORD
     ~packing:(scroll_win#add) ()
   in

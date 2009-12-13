@@ -21,7 +21,7 @@ INCDIRS= +lablgtk2 +lablGL +sdl +xml-light gui/
 OPTIONS= $(INCDIRS:%=-I %)
 
 #Compilation rules
-all: bc
+all: nc
 
 bc: byte-code
 
