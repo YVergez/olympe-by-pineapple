@@ -6,7 +6,8 @@ EXEC=olympe
 PICTPROCSOURCES = picture_processing.ml
 SAMPLINGSOURCES = sampling.ml
 DISPLAYSOURCES  = display3D.ml
-GUISOURCES      = skel.ml help.ml mainview.ml statusbar.ml statebar.ml sidebar.ml dialogs.ml menubar.ml toolbar.ml gui.ml
+GUISOURCES      = skel.ml help.ml mainview.ml statusbar.ml statebar.ml \
+		  sidebar.ml dialogs.ml toolbar.ml menubar.ml gui.ml
 
 SRC = $(PICTPROCSOURCES) $(SAMPLINGSOURCES) $(DISPLAYSOURCES) $(GUISOURCES:%=gui/%) main.ml
 

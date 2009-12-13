@@ -11,9 +11,15 @@ and colors_alt = ref [(0,0,0,0)]
 and step = ref 30
 and menubar = ref (GMenu.menu_bar ())
 and allow_inputs = ref false
+and camera_mode = ref true
 and display_ids = ref ([||]:(GtkSignal.id list) array)
 and use_edges = ref true
 and draw_mode = ref (`triangles:GlDraw.shape)
+and posx = ref 0.
+and posy = ref 0.
+and posz = ref 0.
+and rotx = ref 0.
+and roty = ref 0.
 
 let getMapFile () =
   !map_file

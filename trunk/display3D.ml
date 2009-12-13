@@ -3,6 +3,40 @@
 let window = ref (GWindow.window ())
 and gui_mode = ref false
 and reniew_coord = ref false
+and last_cam = ref false
+
+(* On GUI, recalculate sidebar camera position on minimap *)
+let refreshCameraOnSidebar sidebar_img map_file xpos ypos zpos xrot yrot d_arrow () =
+  let pixbuf = GdkPixbuf.from_file_at_size map_file ~width:180 ~height:180 in
+  let pixmap = GDraw.pixmap 180 180 () in
+  let x  = (!zpos +. 30.) *. 3.
+  and y  = (!xpos *. (-1.) +. 30.) *. 3.
+  and rx = ((-1.) *. !yrot +. 90.) /. (180.) *. 3.1415926 in
+
+    pixmap#put_pixbuf 0 0 pixbuf;
+
+    let draw_arrow color s =
+      pixmap#set_foreground color;
+      let fcoords = [(x,                y-.(s/.2.));
+		     (x-.((s/.2.)-.(s/.10.)), y+.(s/.2.));
+		     (x,                y+.(s/.6.));
+		     (x+.((s/.2.)-.(s/.10.)), y+.(s/.2.))]
+      in
+      let add_angle (cx,cy) =
+	(int_of_float(((cx -. x) *. (cos rx))            +. ((cy -. y) *. (sin rx)) +. x),
+	 int_of_float(((cx -. x) *. ((-1.) *. (sin rx))) +. ((cy -. y) *. (cos rx)) +. y))
+      in
+      let coords = List.map add_angle fcoords in
+	pixmap#polygon ~filled:true coords;
+    in
+
+      if d_arrow then
+	(draw_arrow `BLACK 20.;
+	 draw_arrow `WHITE 12.);
+
+      !sidebar_img#misc#hide ();
+      !sidebar_img#set_pixmap pixmap;
+      !sidebar_img#misc#show ()
 
 let print_points nom_fichier =
   let file = open_in nom_fichier
@@ -190,8 +224,27 @@ let record_colors vect_array faces_array col_alt colors =
   done
 
 let render area max_vect_array vect_array faces_array draw_mode colors_array
-    xrot yrot xpos ypos zpos camera active_color color_test
-    color_selection () =
+    xrot yrot xpos ypos zpos camera active_color color_test color_selection
+    statusbar sidebar_img map_file () =
+  (* Check to see if we changed camera mode *)
+  (if !last_cam <> !camera then
+     begin
+       last_cam := !camera;
+       if not !camera then
+	 (xrot := 40.;
+	  yrot := 94.;
+	  xpos := -.35.;
+	  ypos := 29.;
+	  zpos := -.3.)
+       else
+	 (xrot := 40.7;
+	  yrot := 94.14;
+	  xpos := 0.;
+	  ypos := 0.;
+	  zpos := 45.;
+	  refreshCameraOnSidebar sidebar_img map_file
+	    xpos ypos zpos xrot yrot false ())
+     end);
   GlMat.mode `modelview;
   GlClear.color ~alpha:1.0 (1.0, 1.0, 1.0);
   GlClear.clear [`color;`depth];
@@ -238,7 +291,21 @@ let render area max_vect_array vect_array faces_array draw_mode colors_array
   done;
   GlMat.pop ();
   (*GluMat.look_at ~eye:(0.,10.,0.) ~center:(0.,0.,0.) ~up:(0.,1.,0.);*)
-  area#swap_buffers ()
+  area#swap_buffers ();
+
+  (* Printing infos in statusbar *)
+  (match statusbar with
+      None -> ()
+    | Some s -> !s#pop ();
+	ignore (!s#push ("Camera position : X: " ^ (string_of_float !xpos) ^
+		  " | Y: " ^ (string_of_float !ypos) ^
+		  " | Z: " ^ (string_of_float !zpos) ^
+		  " | X Angle: " ^ (string_of_float !xrot) ^
+		  " | Y Angle: " ^ (string_of_float !yrot))));
+  (* Actualizing minimap *)
+  if not !camera then
+    refreshCameraOnSidebar sidebar_img map_file
+      xpos ypos zpos xrot yrot true ()
 
 let reshape ~width ~height =
   GlDraw.viewport ~x:0 ~y:0 ~w:width ~h:height;
@@ -259,8 +326,6 @@ let keyboard xrot yrot xpos ypos zpos camera active_color nbcol
     try char_of_int key
     with Invalid_argument "char_of_int" -> '>' (* if the key is not a letter (arrow, etc...)*)
   in
-    Printf.printf "xrot=%f\nyrot=%f\nxpos=%f\nypos=%f\nzpos=%f\ncam_rot=%b\n%!"
-      !xrot !yrot !xpos !ypos !zpos !camera;
     if key = 27 && not !gui_mode then
       GMain.Main.quit ();
     if !camera then
@@ -276,12 +341,6 @@ let keyboard xrot yrot xpos ypos zpos camera active_color nbcol
 	| 'o' -> active_color := (!active_color + 1 + nbcol) mod nbcol;
 	| 'l' -> active_color := (!active_color - 1 + nbcol) mod nbcol;
 	| 'p' -> color_selection := not !color_selection;
-	| 'c' -> camera := not !camera;
-	    xrot := 40.;
-	    yrot := 94.;
-	    xpos := -.35.;
-	    ypos := 29.;
-	    zpos := -.3.
 	| _ -> ()
     else
       match char_key with
@@ -304,12 +363,6 @@ let keyboard xrot yrot xpos ypos zpos camera active_color nbcol
 	| 'o' -> active_color := (!active_color + 1 + nbcol) mod nbcol;
 	| 'l' -> active_color := (!active_color - 1 + nbcol) mod nbcol;
 	| 'p' -> color_selection := not !color_selection;
-	| 'c' -> camera := not !camera;
-	    xrot := 40.7;
-	    yrot := 94.14;
-	    xpos := 0.;
-	    ypos := 0.;
-	    zpos := 45.
 	| _ -> ()
 
 let mouse_movement lastx lasty xrot yrot x y =
@@ -450,7 +503,8 @@ let colors_array_of_list cl =
     done;
     res
 
-let draw_map mode ?(gui=false) ?win ?box ?allow ?d_mode ~colors filename =
+let draw_map mode ?(gui=false) ?win ?box ?allow ?d_mode ~colors
+    ?statusbar ?(camera_rotating = ref false) ?sidebar_img ?(map_file="") filename =
   gui_mode := gui;
 
   (* If in GUI mode, we get the main window *)
@@ -469,19 +523,23 @@ let draw_map mode ?(gui=false) ?win ?box ?allow ?d_mode ~colors filename =
     | None -> ref (determine_draw_mode mode)
   in
 
+  let sidebar_img = match sidebar_img with
+      Some img -> img
+    | None -> ref (GMisc.image ())
+  in
+
   let nb_vects = ref 0
   and nb_faces = ref 0
   and file = filename
   and xrot = ref 40.
   and yrot = ref 94.
-  and xpos = ref 0.
+  and xpos = ref 1.23
   and ypos = ref 0.
   and zpos = ref 45.
   and lastx = ref 0.0
   and lasty = ref 0.0
   and active_color = ref 0
-  and color_selection = ref false
-  and camera_rotating = ref true in
+  and color_selection = ref false in
     count_vertices_file file nb_vects;
     count_faces_file file nb_faces;
     let vect_array_ref = ref (Array.make !nb_vects ((0.,0.,0.):Gl.point3))
@@ -505,7 +563,7 @@ let draw_map mode ?(gui=false) ?win ?box ?allow ?d_mode ~colors filename =
 	let render_param =
 	  render glArea uvar t_points faces_array_ref draw_mode
 	    colors_array xrot yrot xpos ypos zpos camera_rotating active_color
-	    color_test color_selection
+	    color_test color_selection statusbar sidebar_img map_file
 	and keyboard_param =
 	  keyboard xrot yrot xpos ypos zpos camera_rotating active_color
 	    (Array.length color_test) color_selection

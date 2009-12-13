@@ -88,12 +88,12 @@ let process_img file out_file =
         if (closed_pix src i j h w) then
           begin
 	    let color = Sdlvideo.get_pixel src i j in
-              Sdlvideo.put_pixel dst i j color;
+              Sdlvideo.put_pixel dst ~x:i ~y:j color;
 	      let (r,g,b) = Sdlvideo.get_pixel_color src i j in
 		list := rf_cur_list (r,g,b) !list;
           end
 	else
-	  Sdlvideo.put_pixel_color dst i j Sdlvideo.black
+	  Sdlvideo.put_pixel_color dst ~x:i ~y:j Sdlvideo.black
       done;
     done;
     for j = 0 to (w - 1) do

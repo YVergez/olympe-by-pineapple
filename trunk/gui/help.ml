@@ -146,6 +146,8 @@ let create () =
       text_view#set_buffer files_content.(pos)
   in
 
+    if Array.length files_content <> 0 then
+      text_view#set_buffer files_content.(0);
     ignore (list_view#append_column view_col);
     ignore (list_view#connect#row_activated ~callback:displaySelectedPage);
 
