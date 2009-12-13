@@ -9,7 +9,7 @@ Exécutez olympe avec les différentes options selon vos choix.
 
 • "-a" pour remplir les altitudes de manière automatique.
 
-• "-o [name.obj]" pour sauvegarder le modele 3D obtenu au format .obj.
+• "-o [name.obj]" pour sauvegarder le modele 3D obtenu au format .obj en tant que name.obj.
 
 • "-g" ou "--gui" pour lancer le projet olympe en mode graphique.
 
