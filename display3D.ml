@@ -242,8 +242,9 @@ let render area max_vect_array vect_array faces_array draw_mode colors_array
 	  xpos := 0.;
 	  ypos := 0.;
 	  zpos := 45.;
-	  refreshCameraOnSidebar sidebar_img map_file
-	    xpos ypos zpos xrot yrot false ())
+	  if !gui_mode then
+	    refreshCameraOnSidebar sidebar_img map_file
+	      xpos ypos zpos xrot yrot false ())
      end);
   GlMat.mode `modelview;
   GlClear.color ~alpha:1.0 (1.0, 1.0, 1.0);
@@ -303,7 +304,7 @@ let render area max_vect_array vect_array faces_array draw_mode colors_array
 		  " | X Angle: " ^ (string_of_float !xrot) ^
 		  " | Y Angle: " ^ (string_of_float !yrot))));
   (* Actualizing minimap *)
-  if not !camera then
+  if not !camera && !gui_mode then
     refreshCameraOnSidebar sidebar_img map_file
       xpos ypos zpos xrot yrot true ()
 
@@ -341,6 +342,7 @@ let keyboard xrot yrot xpos ypos zpos camera active_color nbcol
 	| 'o' -> active_color := (!active_color + 1 + nbcol) mod nbcol;
 	| 'l' -> active_color := (!active_color - 1 + nbcol) mod nbcol;
 	| 'p' -> color_selection := not !color_selection;
+	| 'c' -> camera := not !camera
 	| _ -> ()
     else
       match char_key with
@@ -363,6 +365,7 @@ let keyboard xrot yrot xpos ypos zpos camera active_color nbcol
 	| 'o' -> active_color := (!active_color + 1 + nbcol) mod nbcol;
 	| 'l' -> active_color := (!active_color - 1 + nbcol) mod nbcol;
 	| 'p' -> color_selection := not !color_selection;
+	| 'c' -> camera := not !camera
 	| _ -> ()
 
 let mouse_movement lastx lasty xrot yrot camera x y =
@@ -508,7 +511,7 @@ let colors_array_of_list cl =
     res
 
 let draw_map mode ?(gui=false) ?win ?box ?allow ?d_mode ~colors
-    ?statusbar ?(camera_rotating = ref false) ?sidebar_img ?(map_file="") filename =
+    ?statusbar ?(camera_rotating = ref true) ?sidebar_img ?(map_file="") filename =
   gui_mode := gui;
 
   (* If in GUI mode, we get the main window *)
