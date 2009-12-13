@@ -298,7 +298,14 @@ let render area max_vect_array vect_array faces_array draw_mode colors_array
   (match statusbar with
       None -> ()
     | Some s -> !s#pop ();
-	ignore (!s#push ("Camera position : X: " ^ (string_of_float !xpos) ^
+	let mode_string =
+	  if !camera then
+	    "Object"
+	  else
+	    "Free"
+	in
+	ignore (!s#push ("Camera mode : " ^ mode_string ^ " || " ^
+		  "Camera position : X: " ^ (string_of_float !xpos) ^
 		  " | Y: " ^ (string_of_float !ypos) ^
 		  " | Z: " ^ (string_of_float !zpos) ^
 		  " | X Angle: " ^ (string_of_float (mod_float !xrot 360.)) ^
