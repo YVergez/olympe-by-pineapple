@@ -31,6 +31,28 @@ let toogleDrawMode () =
      Skel.draw_mode := `triangles);
   ignore ((Mainview.get3DViewArea ())#event#send (GdkEvent.create `FOCUS_CHANGE))
 
+(* Set draw mode value *)
+let setDrawMode mode () =
+  if mode = `triangles then
+    Skel.draw_mode := `line_loop
+  else
+    Skel.draw_mode := `triangles;
+  toogleDrawMode ()
+
+(* Toogle camera mode value (true/false) *)
+let toogleCameraMode () =
+  Skel.camera_mode := not !Skel.camera_mode;
+  ignore ((Mainview.get3DViewArea ())#event#send (GdkEvent.create `FOCUS_CHANGE))
+
+let setCameraMode mode () =
+  if mode = "free" then
+    Skel.camera_mode := true
+  else if mode = "object" then
+    Skel.camera_mode := false
+  else
+    invalid_arg ("setCameraMode : Unknown mode \"" ^ mode ^ "\"");
+  toogleCameraMode ()
+
 (* Define a simple variant type for easily create toolbars *)
 type tool_button =
     Button of string * string * string * (unit -> unit)
@@ -119,10 +141,14 @@ let create () =
 		       "wireframe.png",
 		       "Display model in wireframe mode",
 		       toogleDrawMode);
-		Button("Plain",
+		Button("Filled",
 		       "plain.png",
-		       "Display model in plain faces mode",
+		       "Display model in filled faces mode",
 		       toogleDrawMode);
+		Button("Change camera mode",
+		       "camera.png",
+		       "Switch camera mode between free and object",
+		       toogleCameraMode);
 		Separator;
 		Button("Help",
 		       "help.svg",

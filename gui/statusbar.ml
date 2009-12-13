@@ -21,3 +21,6 @@ let setInfo ?(timeout=true) text =
   let id = !statusbar_context#push text in
   if timeout then
     last_timeout_id := Glib.Timeout.add ~ms:5000 ~callback:(cleanByTimeout id)
+
+let getContext () =
+  statusbar_context

@@ -50,8 +50,11 @@ let create3dModel () =
     ~box:(Mainview.get3DViewArea ())
     ~allow:Skel.allow_inputs
     ~d_mode:Skel.draw_mode
+    ~camera_rotating:Skel.camera_mode
+    ~statusbar:(Statusbar.getContext ())
+    ~sidebar_img:appercu3
+    ~map_file:!Skel.map_file
     ~colors:!Skel.colors_alt;
-  Statusbar.setInfo "Displaying 3D model." ~timeout:true;
   (Skel.getWindow ())#misc#set_sensitive true;
   Statebar.moveToState 2 ()
 
@@ -175,6 +178,7 @@ let createSidebar2 () =
 let createSidebar3 () =
   !sidebar3#misc#hide ();
   !sidebar3#pack (createAppercu 3 ())#coerce;
+
   Skel.sidebar_vbox#pack ~expand:false !sidebar3#coerce
 
 (* Create all sidebars *)

@@ -106,26 +106,13 @@ let create () =
       add_submenu menu_view
 	~label:"View mode"
 	~filename:"eye.png"
-	~subitems:[("Free",Skel.void);
-		   ("First person",Skel.void)] ();
+	~subitems:[("Free",Toolbar.setCameraMode "free");
+		   ("Object",Toolbar.setCameraMode "object")] ();
       add_submenu menu_view
 	~label:"Display mode"
 	~filename:"display.png"
-	~subitems:[("Wireframe",Skel.void);
-		   ("Plain",Skel.void)] ();
-      add_submenu menu_view
-	~label:"Camera"
-	~filename:"cam.png"
-	~subitems:[("Rotate...",Skel.void);
-		   ("Scale...",Skel.void);
-		   ("Zoom...",Skel.void);
-		   ("Position...",Skel.void)] ();
-      add_submenu menu_view
-	~label:"Light"
-	~filename:"light.png"
-	~subitems:[("Color...",Skel.void);
-		   ("Rotate...",Skel.void);
-		   ("Position",Skel.void)] ();
+	~subitems:[("Wireframe",Toolbar.setDrawMode `line_loop);
+		   ("Plain",Toolbar.setDrawMode `triangles)] ();
 
       ignore (add_stock_item menu_help ~stock:`ABOUT
 	~callback:(Dialogs.showAbout) ());
