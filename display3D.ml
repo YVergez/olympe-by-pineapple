@@ -301,8 +301,8 @@ let render area max_vect_array vect_array faces_array draw_mode colors_array
 	ignore (!s#push ("Camera position : X: " ^ (string_of_float !xpos) ^
 		  " | Y: " ^ (string_of_float !ypos) ^
 		  " | Z: " ^ (string_of_float !zpos) ^
-		  " | X Angle: " ^ (string_of_float !xrot) ^
-		  " | Y Angle: " ^ (string_of_float !yrot))));
+		  " | X Angle: " ^ (string_of_float (mod_float !xrot 360.)) ^
+		  " | Y Angle: " ^ (string_of_float (mod_float ((-1.) *. !yrot) 360.)))));
   (* Actualizing minimap *)
   if not !camera && !gui_mode then
     refreshCameraOnSidebar sidebar_img map_file
