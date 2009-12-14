@@ -85,17 +85,6 @@ let rec rf_cur_list triplet = function
        (e::l)
 (*_________________*)
 
-(*LOAD*)
-(*Charge le fichier en fonction de son extension*)
-(*let loda f =
-  match f with
-(*    f when (ext f = jpg) ->  Sdlvideo.load_JPG f;
-  |f when (ext f = gif) -> Sdlvideo.load_GIF f;*)
-  |f when (ext f = bmp) -> Sdlvideo.load_BMP f;*)
- (* |f when (ext f = png) -> Sdlvideo.load_PNG f;*)
-
-
-(*_________________*)
 
 (*Main*)
 
