@@ -8,12 +8,11 @@ let map_file = ref ""
 and edged_file = ref "resources/tmp/edged.bmp"
 and obj_file = ref "resources/tmp/map.obj"
 and colors_alt = ref [(0,0,0,0)]
-and step = ref 30
+and step = ref 20
 and menubar = ref (GMenu.menu_bar ())
 and allow_inputs = ref false
 and camera_mode = ref true
 and display_ids = ref ([||]:(GtkSignal.id list) array)
-and use_edges = ref true
 and draw_mode = ref (`triangles:GlDraw.shape)
 and posx = ref 0.
 and posy = ref 0.
@@ -54,11 +53,11 @@ let toogleAllowInputs () =
 let copyFile source dest =
   let in_chan = open_in source
   and out_chan = open_out dest in
-  let rec cp =
-    try output_string out_chan (input_line in_chan)
+  let rec cp () =
+    try output_string out_chan ((input_line in_chan) ^ "\n");cp ();
     with End_of_file -> ()
   in
-    cp;
+    cp ();
     close_in in_chan;
     close_out out_chan
 
@@ -242,11 +241,22 @@ let showDialogAltitudes () =
 		~width:30
 		~packing:(block#pack ~expand:false) () in
 
+	      let value =
+		let rec get_value i = function
+		    [] -> -1
+		  | (_,_,_,a)::t when i = 1 -> a
+		  | _::t -> get_value (i - 1) t
+		in
+		match get_value i !colors_alt with
+		    (-1) -> float_of_int (i * 10)
+		  | v -> float_of_int v
+	      in
+
 	      let spin = GEdit.spin_button
-		~adjustment:( GData.adjustment ~page_size:0.0 ~lower:0. ~upper:300. ())
+		~adjustment:( GData.adjustment ~page_size:0.0 ~lower:0. ~upper:(999. +. 42.) ())
 		~digits:0
 		~update_policy:`IF_VALID
-		~value:(float_of_int (i * 10))
+		~value:value
 		~packing:(block#pack ~expand:false) () in
 
 		user_alts.(i - 1) <- spin;

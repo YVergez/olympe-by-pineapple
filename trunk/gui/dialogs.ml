@@ -130,6 +130,7 @@ let showSaveFile file_type () =
   in
 
     win#add_select_button_stock `SAVE `SAVE;
+    win#set_do_overwrite_confirmation true;
     (match file_type with
 	IMAGE -> win#add_filter img_filter;
 	  win#set_current_name "my_edged_map.bmp";
