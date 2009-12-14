@@ -5,7 +5,7 @@ Lancement
 Exécutez olympe avec les différentes options selon vos choix.
 • "-p [name.bmp]" pour sauvegarder l'image pré-traitée sous le nom name.
 
-• "-i [nombre]" pour définir l'intervalle d'echantillonage (par defaut a 10)
+• "-i [nombre]" pour définir l'intervalle d'echantillonage (par defaut a 20)
 
 • "-a" pour remplir les altitudes de manière automatique.
 
@@ -42,15 +42,14 @@ Il y a également un bouton "Camera" qui sert à changer le mode de vue entre de
 
     Manuel d'installation
 
-Une fois notre logiciel en format compressé téléchargé, décompressez le sur votre bureau (Par exemple...).
+Une fois l'archive du logiciel téléchargée, décompressez-là.
 
-Rendez vous dans le projet.
-À partir de votre bureau "cd olympe" ou à partir de votre racine "cd Desktop/olympe"
+Rendez vous dans le dossier décompressé.
 
-Appeler la commande "make" pour compiler le projet.
-Une fois dans le dossier olympe "make"
+Appelez la commande "make" pour compiler le projet (ou "make bc" pour compiler en byte-code -- non recommandé).
 
 Puis la commande make clean pour supprimer les fichier temporaires nécessaires à la compilation.
 
+Exécutez le programme avec la commande "./olympe [OPTIONS] [FICHIER_BMP]" (voir manuel d'utilisation pour plus de détail).
+
 Pour détruire tous les résultant de la compilation ainsi que le binaire du programme, utilisez la commande make mrproper.
-Toujours dans le dossier olympe, "make mrproper".

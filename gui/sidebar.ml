@@ -22,7 +22,7 @@ let edgeImage () =
   in
   let rec add_alt = function
       [] -> []
-    | (r,g,b)::t -> (r,g,b,0)::(add_alt t)
+    | (r,g,b)::t -> (r,g,b,-1)::(add_alt t)
   in
     Skel.colors_alt := add_alt colors;
     Mainview.setMainMapEdgedImg !Skel.edged_file;
@@ -41,6 +41,7 @@ let create3dModel () =
   ignore (Glib.Main.iteration false);
   (Skel.getWindow ())#misc#set_sensitive false;
   ignore (Glib.Main.iteration false);
+  Skel.camera_mode := true;
   Sampling.do_all !Skel.map_file !Skel.edged_file !Skel.obj_file
     !Skel.step !Skel.colors_alt;
   Skel.display_ids := Display3D.draw_map "-f"
@@ -123,9 +124,9 @@ let createSidebar2 () =
   !sidebar2#pack (createAppercu 2 ())#coerce;
 
   let step_slider = GData.adjustment
-    ~value:30.
+    ~value:20.
     ~lower:10.
-    ~upper:60.
+    ~upper:40.
     ~step_incr:10.
     ~page_incr:20.
     ~page_size:10. ()
@@ -150,13 +151,6 @@ let createSidebar2 () =
     ~label:"Change grid color"
     ~packing:(!sidebar2#pack ~expand:false) () in
 
-  let check_edges = GButton.check_button
-    ~label:"Use relief borders"
-    ~use_mnemonic:true
-    ~active:true
-    ~draw_indicator:true
-    ~packing:(!sidebar2#pack ~expand:false) () in
-
   let computeButt = GButton.button
     ~label:"Compute 3D model"
     ~packing:(!sidebar2#pack ~expand:false) () in
@@ -168,8 +162,6 @@ let createSidebar2 () =
 	      ~callback:(updateStep slider#adjustment));
     ignore (colorButton#connect#clicked
 	      ~callback:showColorSelector);
-    ignore (check_edges#connect#toggled
-	      ~callback:(fun () -> Skel.use_edges := not !Skel.use_edges));
 
     sidebar2_button := computeButt;
     Skel.sidebar_vbox#pack ~expand:false !sidebar2#coerce

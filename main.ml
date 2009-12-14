@@ -43,7 +43,7 @@ Usage : olympe [OPTION...] IMAGE_FILE\n" in
       (Arg.align [
 	 ("-p", Arg.Set_string(pre_img), " save the post-treated image file.");
 	 ("-i", Arg.Set_int(inter), " set the interval for image sampling.");
-	 ("-a", Arg.Set(auto), "auto-fill the altitudes. (not recommended)");
+	 ("-a", Arg.Set(auto), " auto-fill the altitudes. (not recommended)");
 	 ("-o", Arg.Set_string(obj_file), " save the final 3D model (.obj)");
 	 ("-g", Arg.Set(gui_mode), " launch Olympe's GUI");
 	 ("--gui", Arg.Set(gui_mode), " launch Olympe's GUI")])

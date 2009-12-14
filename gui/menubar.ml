@@ -8,14 +8,16 @@ let restartProgram () =
   Skel.colors_alt :=  [(0,0,0,0)];
   Skel.step :=  30;
   Skel.allow_inputs :=  false;
-  Skel.display_ids :=  ([||]:(GtkSignal.id list) array);
-  Skel.use_edges :=  true;
 
   Mainview.setMainInfoText ("Open an image to render using the \"Open image\"" ^
     "button in the toolbar or drag and drop an image file here.");
   Mainview.setMainInfoImg "resources/toolbar/insert-image.svg";
   Statebar.moveToState 0 ();
   Mainview.showMainInfoView ();
+
+  Sidebar.changeAppercuImgByPixbuf (GdkPixbuf.create ~width:1 ~height:1 ());
+  !Sidebar.sidebar1_button#misc#set_sensitive false;
+
   !Statebar.statebar_button1#misc#set_sensitive false;
   !Statebar.statebar_button2#misc#set_sensitive false;
   !Statebar.statebar_button3#misc#set_sensitive false
