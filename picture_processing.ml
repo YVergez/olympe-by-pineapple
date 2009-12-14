@@ -10,7 +10,7 @@
 
 *******************************************************
 *)
-
+(*PIXELS*)
 (*Compare les pixels adjacents*)
 
 let closed_pix src i j h w =
@@ -28,6 +28,15 @@ let closed_pix src i j h w =
 	  true
 	else
 	  false
+(*_________________*)
+
+(*EXTENSION*)
+(*Recupere et renvoie l'extension du fichier*)
+
+let ext s =
+  let i = ((String.rindex s '.')+1) in
+  let j = (String.length s) in
+    String.sub s i j
 
 (*Supprime l'extension du fichier et son emplacement*)
 
@@ -39,13 +48,14 @@ let del_ext s =
     with Not_found -> 0
   in
     String.sub s j (i - j)
+(*_________________*)
 
+(*LIST*)
 (*Met la liste d'altitudes en ordre croissant*)
 
 let incr_list list =
   let aux (x,y,z,a) (u,v,w,b) = a-b in
     List.sort aux list
-
 
 (*Ecrit les differentes couleurs et leurs altitudes correspondantes
 dans un fichier texte "colors"*)
@@ -73,6 +83,19 @@ let rec rf_cur_list triplet = function
        (e::(rf_cur_list triplet l))
      else
        (e::l)
+(*_________________*)
+
+(*LOAD*)
+(*Charge le fichier en fonction de son extension*)
+(*let loda f =
+  match f with
+(*    f when (ext f = jpg) ->  Sdlvideo.load_JPG f;
+  |f when (ext f = gif) -> Sdlvideo.load_GIF f;*)
+  |f when (ext f = bmp) -> Sdlvideo.load_BMP f;*)
+ (* |f when (ext f = png) -> Sdlvideo.load_PNG f;*)
+
+
+(*_________________*)
 
 (*Main*)
 
@@ -102,7 +125,7 @@ let process_img file out_file =
 	  Sdlvideo.put_pixel dst (h-1) j c;
       end
     done;
-    for i = 0 to (h) do
+    for i = 0 to (h-1) do
       begin
 	let c = Sdlvideo.get_pixel src i (w-2) in
 	  Sdlvideo.put_pixel dst i (w-1) c;
