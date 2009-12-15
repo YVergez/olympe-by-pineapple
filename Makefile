@@ -66,7 +66,7 @@ mrproper: clean
 
 #Packing up
 package: mrproper
-	tar -cjvC ../ -f olympe_sources.tar.bz2 Olympe/
+	tar -cjvC ../ -f Olympe-1.0.tar.bz2 Olympe-1.0/
 
 #Dependencies
 .depend:
