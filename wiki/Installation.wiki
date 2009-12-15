@@ -3,10 +3,8 @@
 
 = Guide d'installation (fr) =
 
-Téléchargez l’archive des sources de notre projet à partir de cet espace Google Code ou de notre site à l'adresse:
-http://huuteam.olympe-network.com/Olympe/?page_id=30
-
-*Note* -----------------------------------
+-----------------------------------------
+*Note* 
 
 Il peut être nécessaire d’installer des bibliothèques supplémentaires
 pour compiler notre projet. Les bibliothèques utilisées sont :
@@ -25,18 +23,20 @@ Xml-light http://tech.motion-twin.com/xmllight.html
 
 -------------------------------------------
 
+  * Téléchargez l’archive des sources de notre projet à partir de cet espace Google Code ou de notre site à l'adresse:
+http://huuteam.olympe-network.com/Olympe/?page_id=30
 
-Une fois l’archive du logiciel téléchargée, décompressez-là.
+  * Une fois l’archive du logiciel téléchargée, décompressez-là.
 
-Rendez vous dans le dossier décompressé.
+  * Rendez vous dans le dossier décompressé.
 
-Appelez la commande `make` pour compiler le projet (ou `make bc` pour compiler
+  * Appelez la commande `make` pour compiler le projet (ou `make bc` pour compiler
 en byte-code).
 
-Puis la commande `make clean` pour supprimer les fichier temporaires nécessaires
+  * Puis la commande `make clean` pour supprimer les fichier temporaires nécessaires
 à la compilation.
 
-Exécutez le programme avec la commande `./olympe [OPTIONS] [FICHIER_BMP]` (voir manuel d’utilisation pour plus de détail)
+  * Exécutez le programme avec la commande `./olympe [OPTIONS] [FICHIER_BMP]` (voir manuel d’utilisation pour plus de détail)
 
-Pour détruire tous les résultant de la compilation ainsi que le binaire du
+  * Pour détruire tous les résultant de la compilation ainsi que le binaire du
 programme, utilisez la commande `make mrproper`.
