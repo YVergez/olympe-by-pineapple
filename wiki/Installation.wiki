@@ -30,8 +30,7 @@ http://huuteam.olympe-network.com/Olympe/?page_id=30
 
   * Rendez vous dans le dossier décompressé.
 
-  * Appelez la commande `make` pour compiler le projet (ou `make bc` pour compiler
-en byte-code).
+  * Appelez la commande `make` pour compiler le projet (ou `make bc` pour compiler en byte-code).
 
   * Puis la commande `make clean` pour supprimer les fichier temporaires nécessaires
 à la compilation.
