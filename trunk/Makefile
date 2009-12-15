@@ -25,7 +25,7 @@ all: nc
 
 bc: byte-code
 
-byte-code: $(OBJINT) $(SRC:.ml=.cmo)
+byte-code: .depend $(OBJINT) $(SRC:.ml=.cmo)
 	$(OCAMLC) \
 	\
 	$(OCAMLFLAGS) $(OPTIONS) $(LIBS:%=%.cma) -o $(EXEC)     \
@@ -33,21 +33,21 @@ byte-code: $(OBJINT) $(SRC:.ml=.cmo)
 
 nc: native-code
 
-native-code: $(OBJINT) $(SRC:.ml=.cmx)
+native-code: .depend $(OBJINT) $(SRC:.ml=.cmx)
 	$(OCAMLOPT) \
 	\
 	$(OCAMLFLAGS) $(OPTIONS) $(LIBS:%=%.cmxa) -o $(EXEC)    \
 	$(OBJNAT)
 
 # Common rules
-.SUFFIXES: .ml .mli .cmo .cmi .cmx .mlia
-.PHONY: clean mrproper
+.SUFFIXES: .ml .mli .cmo .cmi .cmx
+.PHONY: clean mrproper .depend
 
 .ml.cmo:
 	$(OCAMLC) -c $(OCAMLFLAGS) $(OPTIONS) $<
 
 .mli.cmi:
-	$(OCAMLC) -c $(OCAMLFLAGS) $(OPTIONS) $<
+	$(OCAMLOPT) -c $(OCAMLFLAGS) $(OPTIONS) $<
 
 .ml.cmx:
 	$(OCAMLOPT) -c $(OCAMLFLAGS) $(OPTIONS) $<
@@ -62,7 +62,7 @@ mrproper: clean
 
 #Create mli
 .ml.mli:
-	$(OCAMLC) -i $(OCAMLFLAGS) $(OPTIONS) $< > $@
+	$(OCAMLC) -i $(OPTIONS) $< > $@
 
 #Packing up
 package: mrproper
@@ -70,6 +70,6 @@ package: mrproper
 
 #Dependencies
 .depend:
-	ocamldep -I gui/ $(OBJMLI) $(SRC) > .depend
+	ocamldep -I gui/ $(SRC) > .depend
 
--include .depend
+include .depend
