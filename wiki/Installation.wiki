@@ -7,8 +7,9 @@ Téléchargez l’archive des sources de notre projet à partir de cet espace Go
 http://huuteam.olympe-network.com/Olympe/?page_id=30
 
 *Note* -----------------------------------
+
 Il peut être nécessaire d’installer des bibliothèques supplémentaires
-pour compiler notre projet. Les bibliothèques utilisés sont :
+pour compiler notre projet. Les bibliothèques utilisées sont :
 
 OCaml http://caml.inria.fr/
 
