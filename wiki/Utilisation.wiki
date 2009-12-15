@@ -1,4 +1,5 @@
 #summary How to use Olympe
+#labels Featured,Phase-Support
 
 = Manuel d'utilisation d'Olympe =
 
