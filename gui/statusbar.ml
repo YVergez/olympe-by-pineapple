@@ -6,7 +6,7 @@ let create () =
   !statusbar#set_has_resize_grip true;
   Skel.statusbar_hbox#add !statusbar#coerce;
   Glib.Timeout.remove !last_timeout_id;
-  ignore (!statusbar_context#push "Welcome to Olympe 1.2")
+  ignore (!statusbar_context#push "Welcome to Olympe 1.0")
 
 let cleanByTimeout id () =
   Glib.Timeout.remove !last_timeout_id;

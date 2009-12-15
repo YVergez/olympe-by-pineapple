@@ -24,7 +24,7 @@ let showAbout () =
     ~logo:((GMisc.image ~file:"resources/olympe-logo.png" ())#pixbuf)
     ~name:"Olympe"
     ~title:"Olympe"
-    ~version:"1.2"
+    ~version:"1.0"
     ~website:"http://olympe-pineapple.fr.nf/"
     ~website_label:"Olympe developpers' blog"
     ~parent:(Skel.getWindow ())
