@@ -1,6 +1,7 @@
 let toolbar1 = ref (GButton.toolbar ())
 and toolbar2 = ref (GButton.toolbar ())
 and toolbar3 = ref (GButton.toolbar ())
+and toolbar_unhide = ref (GButton.button ())
 and allow_inputs = ref false
 
 (* Hide nth item in toolbar t *)
@@ -18,6 +19,29 @@ let showInToolbar t n =
     | 2 -> !toolbar2
     | _ -> !toolbar3 in
   (Array.of_list tb#children).(n)#misc#show ()
+
+(* Toogle hide/show GUI *)
+let toogleGuiDisplay =
+  let showed = ref true in
+    fun () ->
+      if !showed then
+	begin
+	  (* We hide GUI *)
+	  Skel.toolbar_vbox#misc#hide ();
+	  Skel.statebar_hbox#misc#hide ();
+	  Skel.sidebar_vbox#misc#hide ();
+	  Skel.toolbar_unhide_vbox#misc#show ();
+	  showed := false;
+	end
+      else
+	begin
+	  (* We show GUI *)
+	  Skel.toolbar_vbox#misc#show ();
+	  Skel.toolbar_unhide_vbox#misc#hide ();
+	  Skel.statebar_hbox#misc#show ();
+	  Skel.sidebar_vbox#misc#show ();
+	  showed := true;
+	end
 
 (* Toogle draw_mode value (wireframe/plain) *)
 let toogleDrawMode () =
@@ -150,15 +174,26 @@ let create () =
 		       "Switch camera mode between free and object",
 		       toogleCameraMode);
 		Separator;
+		Button("Hide GUI",
+		       "view-fullscreen.svg",
+		       "Hide GUI to have 3D view in fullscreen",
+		       toogleGuiDisplay);
+		Separator;
 		Button("Help",
 		       "help.svg",
 		       "Get helped",
 		       Help.show)
 		 ]) ()
   in
+  let tbh = GButton.button
+    ~label:"Show GUI"
+    ~packing:Skel.toolbar_unhide_vbox#add ()
+  in
     toolbar1 := tb1;
     toolbar2 := tb2;
     toolbar3 := tb3;
+    ignore (tbh#connect#clicked ~callback:toogleGuiDisplay);
+    toolbar_unhide := tbh;
     hideInToolbar 3 3
 
 (* Used to get a pointer on one of the 3 toolbars. Useful for showing/hidding toolbars *)

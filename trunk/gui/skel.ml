@@ -96,6 +96,10 @@ let menubar_vbox = GPack.vbox
 and toolbar_vbox = GPack.vbox
   ~homogeneous:false
   ~packing:(!main_vbox#pack ~expand:false) ()
+and toolbar_unhide_vbox = GPack.vbox
+  ~homogeneous:false
+  ~show:false
+  ~packing:(!main_vbox#pack ~expand:false) ()
 and statebar_hbox = GPack.hbox
   ~homogeneous:true
   ~packing:(!main_vbox#pack ~expand:false) ()
@@ -150,7 +154,7 @@ let windowCreate () =
     ~allow_grow:true
     ~allow_shrink:true
     ~icon:((GMisc.image ~file:"resources/icon.png" ())#pixbuf)
-    ~title:"Olympe 1.2" () in
+    ~title:"Olympe 1.0" () in
     (*win#maximize ();*)
     ignore (win#event#connect#delete ~callback:askExit);
     ignore (win#event#connect#destroy ~callback:askExit);
