@@ -8,21 +8,30 @@ http://huuteam.olympe-network.com/Olympe/?page_id=30
 
 *Note* : Il peut être nécessaire d’installer des bibliothèques supplémentaires
 pour compiler notre projet. Les bibliothèques utilisés sont :
+
 OCaml http://caml.inria.fr/
+
 OCamlSDL http://ocamlsdl.sourceforge.net/home.html
+
 LablGL http://wwwfun.kurims.kyoto-u.ac.jp/soft/lsl/lablgl.html
+
 LablGTK2 http://wwwfun.kurims.kyoto-u.ac.jp/soft/lsl/lablgtk.html
+
 LablGtkGL
+
 Xml-light http://tech.motion-twin.com/xmllight.html
 
 Une fois l’archive du logiciel téléchargée, décompressez-là.
+
 Rendez vous dans le dossier décompressé.
+
 Appelez la commande `make` pour compiler le projet (ou `make bc` pour compiler
 en byte-code).
+
 Puis la commande `make clean` pour supprimer les fichier temporaires nécessaires
 à la compilation.
-Exécutez le programme avec la commande `./olympe [OPTIONS] [FICHIER_BMP]`
-(voir manuel d’utilisation pour plus de détail)
+
+Exécutez le programme avec la commande `./olympe [OPTIONS] [FICHIER_BMP]` (voir manuel d’utilisation pour plus de détail)
 
 Pour détruire tous les résultant de la compilation ainsi que le binaire du
 programme, utilisez la commande `make mrproper`.
