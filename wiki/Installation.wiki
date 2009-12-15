@@ -6,7 +6,8 @@
 Téléchargez l’archive des sources de notre projet à partir de cet espace Google Code ou de notre site à l'adresse:
 http://huuteam.olympe-network.com/Olympe/?page_id=30
 
-*Note* : Il peut être nécessaire d’installer des bibliothèques supplémentaires
+*Note* -----------------------------------
+Il peut être nécessaire d’installer des bibliothèques supplémentaires
 pour compiler notre projet. Les bibliothèques utilisés sont :
 
 OCaml http://caml.inria.fr/
@@ -20,6 +21,9 @@ LablGTK2 http://wwwfun.kurims.kyoto-u.ac.jp/soft/lsl/lablgtk.html
 LablGtkGL
 
 Xml-light http://tech.motion-twin.com/xmllight.html
+
+-------------------------------------------
+
 
 Une fois l’archive du logiciel téléchargée, décompressez-là.
 
