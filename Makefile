@@ -14,7 +14,7 @@ SRC = $(PICTPROCSOURCES) $(SAMPLINGSOURCES) $(DISPLAYSOURCES) $(GUISOURCES:%=gui
 OBJBYTE= gtkInit.cmo $(SRC:.ml=.cmo)
 OBJNAT = gtkInit.cmx $(SRC:.ml=.cmx)
 OBJMLI = $(wildcard *.mli) $(wildcard gui/*.mli)
-OBJINT = $(OBJMLI:.mli=.cmi)
+OBJINT = $(SRC:.ml=.cmi)
 LIBS= unix bigarray sdl sdlloader str lablgtk lablgl lablgtkgl xml-light
 INCDIRS= +lablgtk2 +lablGL +sdl +xml-light gui/
 OCAMLFLAGS= -warn-error A
