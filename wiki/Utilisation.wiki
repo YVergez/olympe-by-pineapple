@@ -1,0 +1,73 @@
+#summary How to use Olympe
+
+= Manuel d'utilisation d'Olympe =
+
+==Lancement==
+Exécutez olympe avec les différentes options selon vos choix.
+{{{
+-p [name.bmp]
+}}}
+pour sauvegarder l’image pré-traitée sous le nom name.
+{{{
+-i [nombre]
+}}}
+pour définir l’intervalle d’échantillonnage (par défaut a 20)
+{{{
+-a
+}}}
+pour remplir les altitudes de manière automatique.
+{{{
+-o [name.obj]
+}}}
+pour sauvegarder le modèle 3D obtenu au format .obj en tant que name.obj.
+{{{
+-g, --gui
+}}}
+pour lancer le projet olympe en mode graphique.
+{{{
+-help, --help
+}}}
+pour afficher cette liste d’options.
+
+
+Le projet se décompose en plusieurs parties : Il y a tout d’abord le prétraitement qui vous permet d’ouvrir la carte de votre choix puis de la détourer.
+
+Ensuite viens l’échantillonnage dans lequel vous réglez le pas que vous souhaitez. Enfin la modélisation 3D dans laquelle vous pouvez vous diriger en 3 dimensions dans votre carte.
+
+==Le Prétraitement==
+Cette partie vous permet de préparer la visualisation de la carte que vous avez choisie. Pour ce faire, vous pouvez charger une image en cliquant sur le bouton "Open image" situé en haut à gauche de la fenêtre, puis en allant chercher votre carte sous format d’image (de type Bitmap) dans votre ordinateur.
+
+Vous pouvez sinon directement la faire glisser dans le cadre principal du projet. Une fois la carte sélectionnée, vous la pouvez la visualiser dans le cadre situé sur la droite de la fenêtre.
+
+Pour lancer le détourage des différentes zones de couleurs de l’image, il vous suffit d’appuyer sur le bouton "Compute edges" situé sur la gauche de la fenêtre. Une fois que vous avez appuyé le programme lance le détourage et passe automatiquement dans l’onglet "Sampling".
+
+==L’Échantillonnage==
+En arrivant sur cette partie pour la première fois, une fenêtre "Altitudes"
+s’ouvre. Dans cette fenêtre, il y a chaque couleur détectée à l’étape précédente
+avec l’altitude correspondante à coté. Remplissez les selon votre bon plaisir. Une
+fois cela accompli, vous pouvez utiliser le curseur mobile situé sous la gauche
+en dessous de la mini-carte pour régler la taille du pas d’échantillonnage de la
+carte. Vous pouvez aussi régler sa couleur afin de mieux le distinguer selon la
+couleur de votre carte. Enfin le bouton "Compute 3D model", situé en dessous,
+permet de passer à la visualisation 3D de la carte.
+
+==La Modélisation 3D==
+C’est dans cette partie que vous pouvez visionner votre carte topologique
+en 3 dimensions. En haut de la fenêtre, se trouve un bouton "Wireframe" ou
+"Filled", qui sert à basculer entre le mode d’affichage fils de fer et surfaces
+pleines. Le bouton "Activate keyboard" sert à activer/désactiver la prise en
+compte du clavier. Il y a également un bouton "Camera" qui sert à changer le
+mode de vue entre deux types :
+
+  * Le mode libre : pour faire bouger la direction dans laquelle vous regardez,
+il suffit de maintenir le clic-gauche enfoncé et de bouger la souris dans
+la zone d’affichage. Les touches q et d du clavier permettent des déplacements
+sur le côté, et les touches z et s permettent de se rapprocher ou de
+s’éloigner du point situé au centre de l’affichage, tout comme la molette
+de la souris.
+
+  * Le mode objet : pour faire tourner la carte sur elle-même, il suffit de
+maintenir le clic-gauche enfoncé et de bouger la souris dans la zone d’affichage.
+Les touches z, q, s et d du clavier permettent de translater la
+carte dans la zone d’affichage, et la molette permet de se rapprocher ou
+de zoomer/dézoomer sur le centre de la zone d’affichage.
