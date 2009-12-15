@@ -1,7 +1,7 @@
 #summary How to use Olympe
 #labels Featured,Phase-Support
 
-= Manuel d'utilisation d'Olympe =
+= Manuel d'utilisation d'Olympe (fr) =
 
 ==Lancement==
 Exécutez olympe avec les différentes options selon vos choix.
